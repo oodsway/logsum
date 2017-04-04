@@ -1,0 +1,80 @@
+--------------------------------------------------------------------------------
+                            Pilot's Logbook Summary Menu
+--------------------------------------------------------------------------------
+    [1]  Total & Recent Experience Table        [s]  Save Results to File
+    [2]  Experience by Category                 [i]  Import a New Logbook File
+    [3]  Experience by Aircraft Type            [d]  Display Database Fields
+    [4]  Experience by Aircraft ID              [t]  Toggle Sort Method
+    [5]  Experience by Year                     [m]  Menu
+    [6]  Display All (1-5)                      [h]  Help
+    [7]  Custom Search Start Date               [L]  License
+    [8]  Custom Recent Experience Ranges        [q]  Quit
+
+    
+    [1] Displays a table of total and recent flight experience based on the current
+    recent-experience range values and the search start date. The default recent-experience 
+    range values are: 30, 60, 90, 180, 365, 1825, 3650, and 7300 days; the default 
+    search start date is the current date. The search start date and recent-experience 
+    range values may be customized using option [7] and [8], respectively.
+
+    [2] Displays a table of flight experience by category from the logbook start date 
+    through the logbook end date. This is a quick summary of flight experience for each 
+    logbook category.
+
+    [3] Displays a table of flight experience by aircraft type including the associated 
+    aircraft ID (registration / tail number) and total hours in all types (including simulator).
+    Results can be sorted by date or alphabetically using option [t]. The default sorting
+    is by date (chronological).
+
+    [4] Displays a table of flight experience by aircraft ID including the associated
+    aircraft type and total hours in all aircraft IDs (including simulator). Results can be 
+    sorted by date or alphabetically using option [t]. The default sorting is by date
+    (chronological).
+
+    [5] Displays a table of the hours flown by year and total hours flown.
+
+    [6] Displays tables [1]-[5] consecutively.
+
+    [7] Displays the following date information and sub-menu:
+    
+        Current Search Start Date: YYYY-MM-DD
+        Last Recorded Flight Date: YYYY-MM-DD
+
+        Enter YYYY-MM-DD | (t)oday | (l)ast flight date | enter to cancel:
+
+    A custom search start date may be entered or the user may select the current 
+    date with (t) or date of last flight with (l) then pressing enter. Pressing enter 
+    with no response will cancel without chaning the current search start date.
+
+    [8] Displays the current recent-experience range values and the following sub-menu:
+    
+        Current range(s): 30 60 90 180 365 1825 3650 7300
+
+        Enter values separated by spaces | (d)efault ranges | enter to cancel:
+
+    Custom range values are entered as integers seperated by spaces and may be 
+    entered in any order; unique values will be sorted ascending.
+    
+    The default values may be reset by selecting (d) then pressing enter. Pressing 
+    enter with no response will cancel without chaning the current range values.
+
+    [s] Select this option to save the search results to a text file. A file
+    named logbook_report_YYYY_MM-DD_hh:mm:ss.txt will be created in the directory 
+    where the program was launched.
+    
+    [i] Select this option to import a new logbook.csv file. Currently, the new
+    file must be in the same directory where the program was launched.
+    
+    [d] A development tool. Displays database information.
+       
+    [t] Toggles the defualt sort method from chronological to alphabetical.
+    
+    [m] Clears the screen and displays the startup menu.
+    
+    [h] Displays the help.txt file or error if not found.
+    
+    [L] Displays the LICENSE.txt file or error if not found.
+    
+    [q] Quits the program.
+    
+    
