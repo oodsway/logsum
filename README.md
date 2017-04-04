@@ -129,7 +129,7 @@ I cited these sources in the code. I am grateful to the community for those who 
 share their knowledge.
 
 I'd like to thank Dan Checkoway of logshare.com for his demo_pilot_database that I used to improve
-the code.
+the code and for allowing me to include this data in the project.
 
 
 
