@@ -118,19 +118,18 @@ the best fix is to avoid spaces in the data in these fields.
 
 # Mac Version
 
-This code will not work on a Mac due to the differnce in the date command used by DarwinBSD.
+This code will not work on a Mac due to the difference in the date command used by DarwinBSD.
 A version that works on Mac is available but currently does not calculate experience by year
-correctly. My plan is to upload the Mac version project soon.
+correctly. I plan to upload the Mac version project soon.
 
 # ACKNOWLEDGEMENTS
 
-I received help with some code from posts I found in the StackOverFlow and reddit communities.
+I received help with some of the code from posts I found in the StackOverFlow and reddit communities.
 I cited these sources in the code. I am grateful to the community for those who so willingly
 share their knowledge.
 
-I'd like to thank Dan Checkoway of logshare.com for his demo_pilot_database that I used to improve
-the code and for allowing me to include this data in the project.
-
-
+Finally, I'd like to thank Dan Checkoway of [Logshare](http://www.logshare.com/) for allowing access to 
+the demo_pilot_database that I used to improve the code and for allowing me to include the logshare_demo.csv
+data in the project. You can use the import feature in logsum to switch between databases.
 
 
