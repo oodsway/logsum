@@ -124,7 +124,10 @@ correctly. I plan to upload the Mac version project soon.
 
 # ACKNOWLEDGEMENTS
 
-I received help with some of the code from posts I found in the StackOverFlow and reddit communities.
+Many thanks to @koalaman for the [shellcheck](https://github.com/koalaman/shellcheck) tool. 
+This tool was invaluable in helping me with the project and advancing my understanding of BASH.
+
+I also received help with some of the code from posts I found in the StackOverFlow and reddit communities.
 I cited these sources in the code. I am grateful to the community for those who so willingly
 share their knowledge.
 
