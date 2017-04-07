@@ -110,7 +110,7 @@ function epoch_engine () {
     close(command);
     print }' "$LOGBOOK_FILE" >> "$EPOCH_LOG"
 
-    _EPOCH_NOW=$(format_date as_epoch "")
+    _EPOCH_NOW=$(date +%s)
 
     log_epoch_list=( $(get_field_list 1) )
     start_end=( $(get_min_max "${log_epoch_list[@]}") )
@@ -284,7 +284,7 @@ function table_seperator () {
     for ((i=0; i<=${#RECENT_RANGES[@]}-1; i++)); do 
         printf "%s" "$seperator"
     done
-    printf "%s\n"
+    printf "\n"
     
 return 0
 }
@@ -475,7 +475,7 @@ function change_date () {
         "") printf "%s\n\n" "Returning to main menu"
             return 0
             ;;
-        "t") _EPOCH_NOW=$(format_date as_epoch "")
+        "t") _EPOCH_NOW=$(date +%s)
             printf "%s\n\n" "New Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
             break
             ;;
