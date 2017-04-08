@@ -448,8 +448,8 @@ function experience_by_year () {
     
     by_year_sums=( )
     for year in "${years[@]}"; do
-        start_year_epoch=$(format_date as_epoch "$year-01-01")
-        end_year_epoch=$(format_date as_epoch "$year-12-31")
+        start_year_epoch=$(format_date as_epoch "$year-01-01 00:00:00")
+        end_year_epoch=$(format_date as_epoch "$year-12-31 23:59:59")
         year_sum=$(get_epoch_range_sum "$end_year_epoch" "$start_year_epoch"  6)   
         by_year_sums+=( "$year_sum" )        
         printf "%5s | %9.1f \n"  "$year" "$year_sum"
