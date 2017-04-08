@@ -161,10 +161,10 @@ return 0
 }
 
 function field_type_test () {
-# awk of selected field is pipped to egrep which checks results vs regex for text
+# awk of selected field is pipped to grep which checks results vs regex for text
 # then counts and returns the number found (>0 is text; =0 is a number).
 
-    awk -F, -v fld="$1" 'FNR>1 {print $fld}' "$EPOCH_LOG" | egrep -c "$2"
+    awk -F, -v fld="$1" 'FNR>1 {print $fld}' "$EPOCH_LOG" | grep -Ec "$2"
     
 return 0
 }
@@ -707,7 +707,7 @@ startup_notice
 menu_item_list=( 1 2 3 4 5 6 d )
 while true; do
     read -r -p "Enter Selection: " opt
-    if ( echo "${menu_item_list[@]}" | egrep -q "$opt" ); then
+    if ( echo "${menu_item_list[@]}" | grep -Eq "$opt" ); then
         rm -f $OUTPUT_FILE
     fi        
     case $opt in
