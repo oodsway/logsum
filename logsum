@@ -189,7 +189,7 @@ function category_summary () {
 
     for (( i=1; i<=len; i++ )); do
         field_sum=$(awk -F, -v fld="$i" '{ {sum+=$fld} } END {print sum}' "$EPOCH_LOG")
-        field_name=$(head -1 "$EPOCH_LOG" | awk -F, -v fld="$i" '{print $fld}' | sed 's/\r$//g')
+        field_name=$(head -1 "$EPOCH_LOG" | awk -F, -v fld="$i" '{print $fld}' | sed 's/\\r$//g')
         fields_list+=( "${field_name}" )
 
         is_text=$(field_type_test "$i" "$reg_text")
