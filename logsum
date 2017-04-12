@@ -38,7 +38,7 @@ fi
 # DEFINITIONS:
 EPOCH_LOG=/tmp/logbook_by_epoch.csv
 OUTPUT_FILE=/tmp/logsum_results.txt
-_SEC_IN_DAY=$((60 * 60 * 24))
+_SEC_IN_DAY=$((3600 * 24))
 default_ranges="30 60 90 180 365 1825 3650 7300" 
 RECENT_RANGES=( $default_ranges )
 is_sorted="chronological"
@@ -104,7 +104,7 @@ function epoch_engine () {
     printf "%s\n" "Creating the search database..."
     head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"
     # SOURCE: http://stackoverflow.com/questions/7965658/
-    awk -F, '/19..|2.../{ OFS = FS;
+    TZ=$(date +%Z) awk -F, '/19..|2.../{ OFS = FS;
     command="date -d" $1 " +%s";
     command | getline $1;
     close(command);
@@ -135,7 +135,7 @@ function leap_test () {
     leaps=0
     for (( test_year="$year_epoch_now"; test_year>="$year_test_epoch"; test_year-- )); do
         if [[  "$test_year-02-29" =~ $reg_date ]]; then
-            test_year_leap_day_epoch=$(format_date as_epoch "$test_year-02-29")
+            test_year_leap_day_epoch=$(format_date as_epoch "$test_year-02-29 00:00:00")
             
             if [[ "$_EPOCH_NOW" -ge "$test_year_leap_day_epoch" && "$test_epoch" -le "$test_year_leap_day_epoch" ]]; then
                 let leaps leaps+=1
@@ -189,7 +189,7 @@ function category_summary () {
 
     for (( i=1; i<=len; i++ )); do
         field_sum=$(awk -F, -v fld="$i" '{ {sum+=$fld} } END {print sum}' "$EPOCH_LOG")
-        field_name=$(head -1 "$EPOCH_LOG" | awk -F, -v fld="$i" '{print $fld}' | sed 's/[^ ]\+/\L\u&/g' | sed 's/\r$//g')
+        field_name=$(head -1 "$EPOCH_LOG" | awk -F, -v fld="$i" '{print $fld}' | sed 's/\r$//g')
         fields_list+=( "${field_name}" )
 
         is_text=$(field_type_test "$i" "$reg_text")
@@ -393,7 +393,7 @@ function aircraft_type_summary () {
     
     printf "%s\n" "$seperator"
     printf " %s %67.1f\n" "Total" "$types_sum"
-    printf " %s\n\n" "Results are $is_sorted"
+    printf "\n%s\n\n" "Results are $is_sorted. Use option [t] to change sort method."
     } >> $OUTPUT_FILE
     
 return 0
@@ -423,7 +423,7 @@ function aircraft_id_summary () {
     
     printf "%s\n" "$seperator"
     printf " %s %39.1f\n" "Total" "$by_id_sum"
-    printf " %s\n\n" "Results are $is_sorted"
+    printf "\n%s\n\n" "Results are $is_sorted. Use option [t] to change sort method."
     } >> $OUTPUT_FILE
     
 return 0
