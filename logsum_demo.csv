@@ -1,4 +1,4 @@
-DATE,AIRCRAFT MAKE & MODEL,AIRCRAFT IDENT,ROUTE OF FLIGHT,Legs,DURATION,LANDINGS DAY,LANDINGS NIGHT,INSTRUMENT,SIMULATED INSTRUMENT,APPROACHES & TYPE,NIGHT,SIMULATOR,CROSS COUNTRY,SOLO,PILOT IN COMMAND,SECOND IN COMMAND,DUAL,INSTRUCTOR,FLIGHT COST,EXPENSES,Fuel (gal)
+Date,Aircraft Type,Aircraft Ident,Route of Flight,Legs,Duration,Landings Day,Landings Night,Instrument,Simulated Instrument,Approaches,Night,Simulator,Cross Country,Solo,Pilot in Command,Second in Command,Dual,As Instructor,Flight Cost,Expenses,Fuel (gal)
 1994-11-05,C150M,N9392U,BED BED,1,0.7,1,,,,,,,,,,,0.7,,,,
 1995-01-05,C150M,N9392U,BED BED,1,1.2,1,,,,,,,,,,,1.2,,,,
 1995-01-08,C152,N69252,BED BED,1,1.1,1,,,,,,,,,,,1.1,,,,
