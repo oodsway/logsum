@@ -1,6 +1,9 @@
 # logsum
 
-**logsum** is an interactive BASH shell script that parses a pilot's logbook.csv file to
+**logsum is an Interactive, Command-Line Interface Pilot's Logbook Summary Tool for Linux-GNU and 
+DarwinBSD (MacOS) Operating Systems.**
+
+**logsum** is a BASH shell script that parses a pilot's logbook.csv file to
 determine and display flight experience including overall and recent experience, experience
 by aircraft type, experience by aircraft identity, and experience by year. Since **logsum**
 can be configured to examine any desired date range of a pilot's logbook it is possible to
@@ -115,12 +118,6 @@ Aircraft Make & Model PA28-151 will succeed, but PA28 151 will not.
 
 Attempts to resolve this have thus far been unsuccessful; suggestions are welcomed.  For now,
 the best fix is to avoid spaces in the data in these fields.
-
-# Mac Version
-
-This code will not work on a Mac due to the difference in the date command used by DarwinBSD.
-A version that works on Mac is available but currently does not calculate experience by year
-correctly. I plan to upload the Mac version project soon.
 
 # ACKNOWLEDGEMENTS
 
