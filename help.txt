@@ -19,7 +19,7 @@
 
     [2] Displays a table of flight experience by category from the logbook start date 
     through the logbook end date. This is a quick summary of flight experience for each 
-    logbook category.
+    logbook category that can be computed.
 
     [3] Displays a table of flight experience by aircraft type including the associated 
     aircraft ID (registration / tail number) and total hours in all types (including simulator).
@@ -59,13 +59,13 @@
     enter with no response will cancel without chaning the current range values.
 
     [s] Select this option to save the search results to a text file. A file
-    named logbook_report_YYYY_MM-DD_hh:mm:ss.txt will be created in the directory 
+    named logbook_report_YYYY-MM-DD_%H%M%S.txt will be created in the directory 
     where the program was launched.
     
     [i] Select this option to import a new logbook.csv file. Currently, the new
     file must be in the same directory where the program was launched.
     
-    [d] A development tool. Displays database information.
+    [d] A development tool. Displays database fields and date information.
        
     [t] Toggles the defualt sort method from chronological to alphabetical.
     
