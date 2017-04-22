@@ -24,20 +24,21 @@ it is not executable, make it executable from the terminal with:
 
 # Use
 
-To start the program from the terminal with your own logbook_file enter:
-
-```./logsum your_logbook_filename.csv```
-
-at the command prompt in the logsum directory.
-
-If your_logbook_filename.csv is not specified, the program will start using the default
-logsum_demo.csv file. If neither file is found the program will exit with an error message.
-
-To start the program with the demo file directly, simply enter:
+To start the program with the demo database file, simply enter:
 
 ```./logsum```
 
 at the command prompt in the logsum directory.
+
+To start the program with your own logbook enter:
+
+```./logsum your_logbook_filename```
+
+at the command prompt in the logsum directory. Be sure to read the section
+on the required field format for your logbook file.
+
+If your_logbook_filename is not specified, the program will start using the default
+logsum_demo.csv file. If neither file is found the program will exit with an error message.
 
 At startup, **logsum** will create a search database file **logbook_by_epoch.csv** in /tmp 
 from the logbook_filename.csv:
