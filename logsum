@@ -2,7 +2,7 @@
 
 # -----------------------------------------------------------------------------
 #   logsum: An Interactive, Command-Line Interface Pilot's Logbook Summary Tool
-#           for Linux-GNU and DarwinBSD (MacOS) Operating Systems.
+#           for Linux, DarwinBSD (macOS) and FreeBSD Operating Systems.
 #
 #   Copyright (c) 2017
 #   Author: Woods Wannamaker (woods.wannamaker@gmail.com)
