@@ -1,7 +1,7 @@
 # logsum
 
-**logsum is an Interactive, Command-Line Interface Pilot's Logbook Summary Tool for Linux-GNU and 
-DarwinBSD (MacOS) Operating Systems.**
+**logsum is an Interactive, Command-Line Interface Pilot's Logbook Summary Tool for Linux, 
+DarwinBSD (macOS) and FreeBSD Operating Systems.**
 
 **logsum** is a BASH shell script that parses a pilot's logbook.csv file to
 determine and display flight experience including overall and recent experience, experience
@@ -15,6 +15,14 @@ capabilities **logsum**.
 
 
 # Installation
+
+**Option 1**
+
+Clone the repository. From the termial execute:
+
+```git clone https://github.com/oodsway/logsum.git```
+
+Option 2**
 
 Download and extract the .zip file. The **logsum** folder will contain the script **logsum**. If
 it is not executable, make it executable from the terminal with:
