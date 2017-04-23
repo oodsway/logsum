@@ -7,7 +7,7 @@
     [4]  Experience by Aircraft ID              [t]  Toggle Sort Method
     [5]  Experience by Year                     [m]  Menu
     [6]  Display All (1-5)                      [h]  Help
-    [7]  Custom Search Start Date               [L]  License
+    [7]  Custom Search Start Date               [l]  License
     [8]  Custom Recent Experience Ranges        [q]  Quit
 
     
