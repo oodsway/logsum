@@ -22,7 +22,7 @@ Clone the repository. From the termial execute:
 
 ```git clone https://github.com/oodsway/logsum.git```
 
-Option 2**
+**Option 2**
 
 Download and extract the .zip file. The **logsum** folder will contain the script **logsum**. If
 it is not executable, make it executable from the terminal with:
