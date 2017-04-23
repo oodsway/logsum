@@ -66,9 +66,10 @@ function format_date () {
                 date +%F_%H%M%S
                 ;;
             get_year)
-                date -d @"$2" +%Y;;
+                date -d @"$2" +%Y
+                ;;
         esac
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
+    elif [[ "$OSTYPE" == "darwin"* || "$OSTYPE" == "freebsd"* ]]; then
         case "$1" in
             as_epoch)
                 date -jf "%F %T" "$2" +%s
@@ -80,8 +81,12 @@ function format_date () {
                 date +%F_%H%M%S
                 ;;
             get_year)
-                date -r "$2" +%Y;;
+                date -r "$2" +%Y
+                ;;
         esac
+    else
+        printf "\n%s\n\n" "Error: OSTYPE not recognized! Exiting."
+        exit 1
     fi
     
 return 0
@@ -128,12 +133,15 @@ function epoch_engine () {
         command | getline $1;
         close(command);
         print }' "$LOGBOOK_FILE" >> "$EPOCH_LOG"
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
+    elif [[ "$OSTYPE" == "darwin"* || "$OSTYPE" == "freebsd"* ]]; then
         awk -F, '/19..|2.../{ OFS = FS;
         command="date -jf  %F "$1 "  +%s";
         command | getline $1;
         close(command);
         print }' "$LOGBOOK_FILE" >> "$EPOCH_LOG"
+    else
+        printf "\n%s\n\n" "Error: OSTYPE not recognized! Exiting."
+        exit 1
     fi
 
     _EPOCH_NOW=$(date +%s)
@@ -156,13 +164,16 @@ function is_date_valid () {
 
     if [[ "$OSTYPE" == "linux-gnu" ]]; then
         date -d "$1" &> /dev/null; echo $?
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
+    elif [[ "$OSTYPE" == "darwin"* || "$OSTYPE" == "freebsd"* ]]; then
         osx_test=$(date -v+1M -v-1M -jf "%F %T" "$1 00:00:00" +"%F %T" 2> /dev/null)
         if [[ "$osx_test" == "$1 00:00:00" ]]; then
             echo 0
         else
             echo 1
         fi
+    else
+        printf "\n%s\n\n" "Error: OSTYPE not recognized! Exiting."
+        exit 1
     fi
 }
 
@@ -327,9 +338,11 @@ function list_sorter () {
 
     if [[ "$is_sorted" = "alphabetical" ]]; then
         sort -u
-   else
+    elif [[ "$is_sorted" = "chronological" ]]; then
         # SOURCE: http://stackoverflow.com/questions/618378/
         perl -ne 'if (!defined $x{$_}) { print $_; $x{$_} = 1; }'
+    else
+        printf "\n%s\n\n" "Error! Undefined Sort Method!"
     fi
     
 return 0
@@ -530,19 +543,23 @@ function change_date () {
     while true; do
         read -r -p "Enter YYYY-MM-DD | (t)oday | (l)ast flight date | enter to cancel: " new_date
         case $new_date in
-        "") printf "%s\n\n" "Returning to main menu"
+        "") 
+            printf "%s\n\n" "Returning to main menu"
             return 0
             ;;
-        "t") _EPOCH_NOW=$(date +%s)
+        "t") 
+            _EPOCH_NOW=$(date +%s)
             printf "%s\n\n" "New Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
             break
             ;;
-        "l") _EPOCH_NOW="$log_end_epoch"
+        "l") 
+            _EPOCH_NOW="$log_end_epoch"
             printf "%s\n\n" "New Search Start Date: $log_end_date"
             break      
             ;;
-            # validate YYYY-MM-DD format vs reg_date then test if date is valid
-        *)  if [[ "$new_date" =~ $reg_date ]]; then
+            
+        *)  # validate YYYY-MM-DD format vs reg_date then test if date is valid
+            if [[ "$new_date" =~ $reg_date ]]; then
                 is_valid=$(is_date_valid "$new_date")
                 if [[ "$is_valid" -eq 0 ]]; then
                     _EPOCH_NOW=$(format_date as_epoch "$new_date 00:00:00")
@@ -600,14 +617,17 @@ function change_recent_ranges () {
         read -r -p "Enter values separated by spaces | (d)efault ranges | enter to cancel: " line
         
         case $line in
-            "") printf "%s\n\n" "Returning to main menu"
+            "") 
+                printf "%s\n\n" "Returning to main menu"
                 return 0
                 ;;
-            "d") RECENT_RANGES=( $default_ranges )
+            "d") 
+                RECENT_RANGES=( $default_ranges )
                 break
                 ;;
-                # check if integer(s) separated with spaces
-            *)  if [[ "$line" =~ $reg_int_range ]]; then
+                
+            *)  # check if integer(s) separated with spaces
+                if [[ "$line" =~ $reg_int_range ]]; then
                     new_ranges=( $line )   
                     RECENT_RANGES=( $(sort_custom_ranges "${new_ranges[@]}" ) )
                     break
@@ -652,10 +672,12 @@ function import_log_file () {
         read -r -p "Enter Filename or press Enter to cancel: " new_db
         
         case $new_db in
-            "") printf "%s\n\n" "Returning to main menu"
+            "") 
+                printf "%s\n\n" "Returning to main menu"
                 return 0
                 ;;
-            *)  if [ -e "$new_db" ]; then
+            *)  
+                if [ -e "$new_db" ]; then
                     LOGBOOK_FILE="${launch_path}"/"$new_db"
                     printf "%s %s\n" "New logfile is: " "$LOGBOOK_FILE"
                     RECENT_RANGES=( $default_ranges )
@@ -736,14 +758,14 @@ if [ "$1" = "start" ]; then
 fi
 
 cat << 'EOF'
-    [1]  Total & Recent Experience Table        [s]  Save Results to File
-    [2]  Experience by Category                 [i]  Import a New Logbook File
-    [3]  Experience by Aircraft Type            [d]  Display Database Fields
-    [4]  Experience by Aircraft ID              [t]  Toggle Sort Method
-    [5]  Experience by Year                     [m]  Menu
-    [6]  Display All (1-5)                      [h]  Help
-    [7]  Custom Search Start Date               [L]  License
-    [8]  Custom Recent Experience Ranges        [q]  Quit
+    [1]  Total & Recent Experience Table        [s|S]  Save Results to File
+    [2]  Experience by Category                 [i|I]  Import a New Logbook File
+    [3]  Experience by Aircraft Type            [d|D]  Display Database Fields
+    [4]  Experience by Aircraft ID              [t|T]  Toggle Sort Method
+    [5]  Experience by Year                     [m|M]  Menu
+    [6]  Display All (1-5)                      [h|H]  Help
+    [7]  Custom Search Start Date               [l|L]  License
+    [8]  Custom Recent Experience Ranges        [q|Q]  Quit
 
 EOF
 
@@ -776,48 +798,66 @@ while true; do
         rm -f $OUTPUT_FILE
     fi        
     case $opt in
-        "1")flight_experience_summary
+        "1")
+            flight_experience_summary
             display_results
             ;;
-        "2")category_summary
+        "2")
+            category_summary
             display_results
             ;;
-        "3")aircraft_type_summary
+        "3")
+            aircraft_type_summary
             display_results
             ;;
-        "4") aircraft_id_summary
+        "4")
+            aircraft_id_summary
             display_results
             ;;
-        "5")experience_by_year
+        "5")
+            experience_by_year
             display_results
             ;;
-        "6")flight_experience_summary
+        "6")
+            flight_experience_summary
             category_summary
             aircraft_type_summary
             aircraft_id_summary
             experience_by_year
             display_results
             ;;
-        "7")change_date
+        "7")
+            change_date
             ;;
-        "8")change_recent_ranges
+        "8")
+            change_recent_ranges
             ;;
-        "s")save_to_file
+        "s"|"S")
+            save_to_file
             ;;
-        "i")import_log_file
+        "i"|"I")
+            import_log_file
             ;; 
-        "d")display_data_fields
+        "d"|"D")
+            display_data_fields
             display_results
             ;;
-        "t") toggle_sort_status
+        "t"|"T")
+            toggle_sort_status
             ;;
-        "m") clear; menu start
+        "m"|"M")
+            clear
+            menu start
             ;;
-        "h") help_file
+        "h"|"H")
+            help_file
             ;;
-        "L") clear; display_license
+        "l"|"L")
+            clear
+            display_license
             ;;
-        "q")break
+        "q"|"Q")
+            break
             ;;
         *) printf "%s\n\n" "Invalid option!"
             ;;
