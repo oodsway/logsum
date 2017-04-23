@@ -57,6 +57,9 @@
     
     The default values may be reset by selecting (d) then pressing enter. Pressing 
     enter with no response will cancel without chaning the current range values.
+    
+    
+    Note: Alphanumeric menu items are not case sensitive.
 
     [s] Select this option to save the search results to a text file. A file
     named logbook_report_YYYY-MM-DD_%H%M%S.txt will be created in the directory 
