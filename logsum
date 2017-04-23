@@ -37,6 +37,7 @@ else
 fi
 
 # DEFINITIONS:
+OS=$(uname)
 EPOCH_LOG=/tmp/logbook_by_epoch.csv
 OUTPUT_FILE=/tmp/logsum_results.txt
 _SEC_IN_DAY=$((3600 * 24))
@@ -52,42 +53,42 @@ reg_word_date='(D|d)(A|a)(T|t)(E|e)'
 reg_date='(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|(1|2)[0-9]|3[0-1])'
 
 function format_date () {
-# Retruns the date format requested in $1 for date $2 depending on OSTYPE.
+# Retruns the date format requested in $1 for date $2 depending on OS.
 
-    if [[ "$OSTYPE" == "linux-gnu" ]]; then
-        case "$1" in
-            as_epoch)
-                date -d "$2" +%s
-                ;;
-            as_day)
-                date -d @"$2" +%F
-                ;;
-            as_day_time)
-                date +%F_%H%M%S
-                ;;
-            get_year)
-                date -d @"$2" +%Y
-                ;;
-        esac
-    elif [[ "$OSTYPE" == "darwin"* || "$OSTYPE" == "freebsd"* ]]; then
-        case "$1" in
-            as_epoch)
-                date -jf "%F %T" "$2" +%s
-                ;;   
-            as_day)
-                date -r "$2" +%F
-                ;;
-            as_day_time)
-                date +%F_%H%M%S
-                ;;
-            get_year)
-                date -r "$2" +%Y
-                ;;
-        esac
-    else
-        printf "\n%s\n\n" "Error: OSTYPE not recognized! Exiting."
-        exit 1
-    fi
+    case "$OS" in
+        "Linux")
+            case "$1" in
+                as_epoch)
+                    date -d "$2" +%s
+                    ;;
+                as_day)
+                    date -d @"$2" +%F
+                    ;;
+                as_day_time)
+                    date +%F_%H%M%S
+                    ;;
+                get_year)
+                    date -d @"$2" +%Y
+                    ;;
+            esac
+            ;;
+        "Darwin"|"FreeBSD")
+            case "$1" in
+                as_epoch)
+                    date -jf "%F %T" "$2" +%s
+                    ;;   
+                as_day)
+                    date -r "$2" +%F
+                    ;;
+                as_day_time)
+                    date +%F_%H%M%S
+                    ;;
+                get_year)
+                    date -r "$2" +%Y
+                    ;;
+            esac
+            ;;
+    esac
     
 return 0
 }
@@ -121,28 +122,34 @@ return 0
 
 function epoch_engine () {
 # Creates EPOCH_LOG with header from LOGBOOK_FILE source.
+# Modification of: http://stackoverflow.com/questions/7965658/
 
-    printf "%s\n" "Creating the search database..."
-    head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"
-    TZ=$(date +%Z)
-    
-    # modification of: http://stackoverflow.com/questions/7965658/
-    if [[ "$OSTYPE" == "linux-gnu" ]]; then
-        awk -F, '/19..|2.../{ OFS = FS;
-        command="date -d" $1 " +%s";
-        command | getline $1;
-        close(command);
-        print }' "$LOGBOOK_FILE" >> "$EPOCH_LOG"
-    elif [[ "$OSTYPE" == "darwin"* || "$OSTYPE" == "freebsd"* ]]; then
-        awk -F, '/19..|2.../{ OFS = FS;
-        command="date -jf  %F "$1 "  +%s";
-        command | getline $1;
-        close(command);
-        print }' "$LOGBOOK_FILE" >> "$EPOCH_LOG"
-    else
-        printf "\n%s\n\n" "Error: OSTYPE not recognized! Exiting."
-        exit 1
-    fi
+    case "$OS" in
+        "Linux")
+            printf "%s\n" "Creating the search database..."
+            head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"
+            TZ=$(date +%Z)
+            awk -F, '/19..|2.../{ OFS = FS;
+            command="date -d" $1 " +%s";
+            command | getline $1;
+            close(command);
+            print }' "$LOGBOOK_FILE" >> "$EPOCH_LOG"
+            ;;
+        "Darwin"|"FreeBSD")
+            printf "%s\n" "Creating the search database..."
+            head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"
+            TZ=$(date +%Z)
+            awk -F, '/19..|2.../{ OFS = FS;
+            command="date -jf  %F "$1 "  +%s";
+            command | getline $1;
+            close(command);
+            print }' "$LOGBOOK_FILE" >> "$EPOCH_LOG"
+            ;;
+        *)
+            printf "\n%s %s\n\n" "Error!" "$OS OS not supported! Exiting."
+            exit 1
+            ;;
+    esac
 
     _EPOCH_NOW=$(date +%s)
 
@@ -162,19 +169,19 @@ function is_date_valid () {
 # Returns 0 for valid date; 1 for invalid.
 # Modification of: http://stackoverflow.com/questions/10759162/
 
-    if [[ "$OSTYPE" == "linux-gnu" ]]; then
-        date -d "$1" &> /dev/null; echo $?
-    elif [[ "$OSTYPE" == "darwin"* || "$OSTYPE" == "freebsd"* ]]; then
-        osx_test=$(date -v+1M -v-1M -jf "%F %T" "$1 00:00:00" +"%F %T" 2> /dev/null)
-        if [[ "$osx_test" == "$1 00:00:00" ]]; then
-            echo 0
-        else
-            echo 1
-        fi
-    else
-        printf "\n%s\n\n" "Error: OSTYPE not recognized! Exiting."
-        exit 1
-    fi
+    case "$OS" in
+        "Linux")
+            date -d "$1" &> /dev/null; echo $?
+            ;;
+        "Darwin"|"FreeBSD")
+            osx_test=$(date -v+1M -v-1M -jf "%F %T" "$1 00:00:00" +"%F %T" 2> /dev/null)
+            if [[ "$osx_test" == "$1 00:00:00" ]]; then
+                echo 0
+            else
+                echo 1
+            fi
+            ;;
+    esac
 }
 
 function is_year_leap () {
@@ -333,18 +340,17 @@ return 0
 }
 
 function list_sorter () {
-# Returns unique sorted (A-z) || unique unsorted (chrono if csv by date) values 
-# for target_field dependent on status of is_sorted flag.
+# Returns a list uniquely sorted alphabetically or chronologically depending on is_sorted variable.
 
-    if [[ "$is_sorted" = "alphabetical" ]]; then
-        sort -u
-    elif [[ "$is_sorted" = "chronological" ]]; then
-        # SOURCE: http://stackoverflow.com/questions/618378/
-        perl -ne 'if (!defined $x{$_}) { print $_; $x{$_} = 1; }'
-    else
-        printf "\n%s\n\n" "Error! Undefined Sort Method!"
-    fi
-    
+    case "$is_sorted" in
+        "alphabetical")
+            sort -u
+            ;;
+        "chronological")
+            perl -ne 'if (!defined $x{$_}) { print $_; $x{$_} = 1; }'
+            ;;
+    esac
+       
 return 0
 }
 
@@ -758,14 +764,14 @@ if [ "$1" = "start" ]; then
 fi
 
 cat << 'EOF'
-    [1]  Total & Recent Experience Table        [s|S]  Save Results to File
-    [2]  Experience by Category                 [i|I]  Import a New Logbook File
-    [3]  Experience by Aircraft Type            [d|D]  Display Database Fields
-    [4]  Experience by Aircraft ID              [t|T]  Toggle Sort Method
-    [5]  Experience by Year                     [m|M]  Menu
-    [6]  Display All (1-5)                      [h|H]  Help
-    [7]  Custom Search Start Date               [l|L]  License
-    [8]  Custom Recent Experience Ranges        [q|Q]  Quit
+    [1]  Total & Recent Experience Table        [s]  Save Results to File
+    [2]  Experience by Category                 [i]  Import a New Logbook File
+    [3]  Experience by Aircraft Type            [d]  Display Database Fields
+    [4]  Experience by Aircraft ID              [t]  Toggle Sort Method
+    [5]  Experience by Year                     [m]  Menu
+    [6]  Display All (1-5)                      [h]  Help
+    [7]  Custom Search Start Date               [l]  License
+    [8]  Custom Recent Experience Ranges        [q]  Quit
 
 EOF
 
