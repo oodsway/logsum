@@ -24,6 +24,13 @@
 
 clear
 
+OS_SUPPORTED=( "Linux" "Darwin" "FreeBSD" )
+OS=$(uname)
+if ! [[ ${OS_SUPPORTED[@]} =~ $OS ]]; then
+    printf "\n%s %s\n\n" "Error!" "$OS OS not supported! Exiting."
+    exit 1
+fi  
+
 launch_path=$(pwd)
 demo_logbook="${launch_path}"/logsum_demo.csv
 
@@ -37,7 +44,6 @@ else
 fi
 
 # DEFINITIONS:
-OS=$(uname)
 EPOCH_LOG=/tmp/logbook_by_epoch.csv
 OUTPUT_FILE=/tmp/logsum_results.txt
 _SEC_IN_DAY=$((3600 * 24))
@@ -124,11 +130,12 @@ function epoch_engine () {
 # Creates EPOCH_LOG with header from LOGBOOK_FILE source.
 # Modification of: http://stackoverflow.com/questions/7965658/
 
+    printf "%s\n" "Creating the search database..."
+    head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"
+    TZ=$(date +%Z)
+
     case "$OS" in
         "Linux")
-            printf "%s\n" "Creating the search database..."
-            head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"
-            TZ=$(date +%Z)
             awk -F, '/19..|2.../{ OFS = FS;
             command="date -d" $1 " +%s";
             command | getline $1;
@@ -136,18 +143,11 @@ function epoch_engine () {
             print }' "$LOGBOOK_FILE" >> "$EPOCH_LOG"
             ;;
         "Darwin"|"FreeBSD")
-            printf "%s\n" "Creating the search database..."
-            head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"
-            TZ=$(date +%Z)
             awk -F, '/19..|2.../{ OFS = FS;
             command="date -jf  %F "$1 "  +%s";
             command | getline $1;
             close(command);
             print }' "$LOGBOOK_FILE" >> "$EPOCH_LOG"
-            ;;
-        *)
-            printf "\n%s %s\n\n" "Error!" "$OS OS not supported! Exiting."
-            exit 1
             ;;
     esac
 
@@ -347,6 +347,7 @@ function list_sorter () {
             sort -u
             ;;
         "chronological")
+            # SOURCE: http://stackoverflow.com/questions/618378/
             perl -ne 'if (!defined $x{$_}) { print $_; $x{$_} = 1; }'
             ;;
     esac
@@ -800,7 +801,7 @@ menu_item_list=( 1 2 3 4 5 6 d )
 while true; do
     read -r -p "Enter Selection: " opt
     # modification of: http://stackoverflow.com/questions/8063228/
-    if [[ ${menu_item_list[@]} =~ (^|[[:space:]])$opt($|[[:space:]]) ]]; then
+    if [[ ${menu_item_list[@]} =~ $opt ]]; then
         rm -f $OUTPUT_FILE
     fi        
     case $opt in
