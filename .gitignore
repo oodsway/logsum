@@ -1,2 +1,13 @@
+# Files
 logsum.dev
-reg_int_range_test
+reg_int_range_test*
+changelog.txt
+codeonly.txt
+functions_list.txt
+logsum_stats
+variable_list.txt
+logbook_report*
+
+# Hidden
+.DS_Store
+._.DS_Store
