@@ -52,7 +52,7 @@ RECENT_RANGES=( $default_ranges )
 is_sorted="chronological"
 reg_text='[A-Za-z]'
 reg_int='^[0-9]+$'
-reg_int_range='(^[1-9]?$)|(^[^-0A-Za-z][0-9 ]+$)'
+reg_int_range='(^[1-9 ]+$)|(^[1-9 ][0-9 ]+$)' 
 reg_float='^[0-9]+\.[0-9]+$'
 reg_word_date='(D|d)(A|a)(T|t)(E|e)'
 # Allow YYYY-MM-DD dates from 20th century or later. Allow 31 DD per MM (be generous). 
@@ -598,7 +598,9 @@ function sort_custom_ranges () {
     while (( ${#copy_list[@]} > 0)); do
         min_max=( $(get_min_max "${copy_list[@]}") )
         min="${min_max[0]}"
-        sorted_list+=( "$min" )
+        if [[ "$min" -gt "0" ]]; then
+            sorted_list+=( "$min" )
+        fi
         
         # remove min from copy_list by making tmp_list excluding min; make copy==new and reset min      
         tmp_list=()
