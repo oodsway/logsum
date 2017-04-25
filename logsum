@@ -598,9 +598,7 @@ function sort_custom_ranges () {
     while (( ${#copy_list[@]} > 0)); do
         min_max=( $(get_min_max "${copy_list[@]}") )
         min="${min_max[0]}"
-        if [[ "$min" -gt "0" ]]; then
-            sorted_list+=( "$min" )
-        fi
+        sorted_list+=( "$min" )
         
         # remove min from copy_list by making tmp_list excluding min; make copy==new and reset min      
         tmp_list=()
@@ -623,7 +621,7 @@ function change_recent_ranges () {
 
     printf "%s\n\n" "Current range(s): ${RECENT_RANGES[*]}"    
     while true; do
-        read -r -p "Enter values separated by spaces | (d)efault ranges | enter to cancel: " line
+        read -r -p "Enter values >0 separated by spaces | (d)efault ranges | enter to cancel: " line
         
         case $line in
             "") 
@@ -635,13 +633,22 @@ function change_recent_ranges () {
                 break
                 ;;
                 
-            *)  # check if integer(s) separated with spaces
-                if [[ "$line" =~ $reg_int_range ]]; then
-                    new_ranges=( $line )   
+            *)  # check if integer(s) >0 separated with spaces
+                new_ranges=( $line )
+                check_list=()
+                for item in "${new_ranges[@]}"; do
+                    if [[ "$item" =~ $reg_int_range ]]; then
+                        check_list+=( "True" )
+                    else
+                        check_list+=( "False" )
+                    fi
+                done
+            
+                if [[ "${check_list[@]}" =~ False ]]; then
+                    printf "%s\n\n" "Invalid range values or format!"
+                else  
                     RECENT_RANGES=( $(sort_custom_ranges "${new_ranges[@]}" ) )
                     break
-                else
-                    printf "%s\n\n" "Invalid ranges format!"
                 fi
                 ;;
         esac
