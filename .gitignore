@@ -1,5 +1,5 @@
 # Files
-logsum.dev
+logsum*
 reg_int_range_test*
 changelog.txt
 codeonly.txt
@@ -12,3 +12,5 @@ issues*
 # Hidden
 .DS_Store
 ._.DS_Store
+.logbook_by_epoch.csv
+.logsum_results.txt
