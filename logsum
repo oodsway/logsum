@@ -26,7 +26,7 @@ clear
 
 OS_SUPPORTED=( "Linux" "Darwin" "FreeBSD" )
 OS=$(uname)
-if ! [[ ${OS_SUPPORTED[@]} =~ $OS ]]; then
+if ! [[ "${OS_SUPPORTED[*]}" =~ $OS ]]; then
     printf "\n%s %s\n\n" "Error!" "$OS OS not supported! Exiting."
     exit 1
 fi  
@@ -44,8 +44,8 @@ else
 fi
 
 # DEFINITIONS:
-EPOCH_LOG=/tmp/logbook_by_epoch.csv
-OUTPUT_FILE=/tmp/logsum_results.txt
+EPOCH_LOG="${launch_path}"/.logbook_by_epoch.csv
+OUTPUT_FILE="${launch_path}"/.logsum_results.txt
 _SEC_IN_DAY=$((3600 * 24))
 default_ranges="30 60 90 180 365 1825 3650 7300" 
 RECENT_RANGES=( $default_ranges )
@@ -126,6 +126,18 @@ function get_min_max () {
 return 0
 }
 
+function set_ranges_limit () {
+# Calculate max recent range value based on _EPOCH_NOW and date of first powered flight: 1903-12-17 10:35:00
+# Optional: use limit of dates allowed 1900-01-01: 
+#     century20_epoch="-2208970800"
+#     max_range_val=$(( $(( _EPOCH_NOW - century20_epoch )) / _SEC_IN_DAY ))
+
+    first_flight_epoch="-2084084700"
+    max_range_val=$(( $(( _EPOCH_NOW - first_flight_epoch )) / _SEC_IN_DAY ))
+
+return 0
+}
+
 function epoch_engine () {
 # Creates EPOCH_LOG with header from LOGBOOK_FILE source.
 # Modification of: http://stackoverflow.com/questions/7965658/
@@ -152,7 +164,8 @@ function epoch_engine () {
     esac
 
     _EPOCH_NOW=$(date +%s)
-
+    set_ranges_limit
+    
     log_epoch_list=( $(get_field_list 1) )
     start_end=( $(get_min_max "${log_epoch_list[@]}") )
     log_start_epoch="${start_end[0]}"
@@ -163,7 +176,7 @@ function epoch_engine () {
     printf "%s\n" "Search database creation completed."
     
 return 0
-}       
+}    
 
 function is_date_valid () {
 # Returns 0 for valid date; 1 for invalid.
@@ -174,8 +187,8 @@ function is_date_valid () {
             date -d "$1" &> /dev/null; echo $?
             ;;
         "Darwin"|"FreeBSD")
-            osx_test=$(date -v+1M -v-1M -jf "%F %T" "$1 00:00:00" +"%F %T" 2> /dev/null)
-            if [[ "$osx_test" == "$1 00:00:00" ]]; then
+            time_shift=$(date -v+1M -v-1M -jf "%F %T" "$1 00:00:00" +"%F %T" 2> /dev/null)
+            if [[ "$time_shift" == "$1 00:00:00" ]]; then
                 echo 0
             else
                 echo 1
@@ -201,8 +214,7 @@ return 0
 }
 
 function leap_test () {
-# Determines the number of leap days in a RECENT_RANGES epoch and corrects epoch accordingly.
-# Returns an epoch unchanged or corrected for the number of leaps in the range.
+# Returns a tuple of leaps and leap-corrected epoch for a given recent-range epoch value.
 
     test_epoch="$1"
     year_test_epoch=$(format_date get_year "$test_epoch")
@@ -220,18 +232,20 @@ function leap_test () {
         fi
     done
 
-    echo "$((test_epoch -  leaps * _SEC_IN_DAY))"
+    echo "$leaps" "$((test_epoch -  leaps * _SEC_IN_DAY))" 
     
 return 0
 }
 
 function build_epoch_list () {
-# Calculate epoch_value for day-range & call leap_test.
+# Builds leap_list and EPOCH_LIST. Calculates epoch for a range value & tests with leap_test function.
 
+    leap_list=()
     EPOCH_LIST=()
     for range in "${RECENT_RANGES[@]}"; do
-        leap_tested_epoch=$( leap_test $((_EPOCH_NOW - range * _SEC_IN_DAY )) )
-        EPOCH_LIST+=( "$leap_tested_epoch" )
+        if_leap=( $(leap_test $((_EPOCH_NOW - range * _SEC_IN_DAY )) ) )
+        leap_list+=( "${if_leap[0]}" )
+        EPOCH_LIST+=( "${if_leap[1]}" )
     done
     
 return 0
@@ -247,9 +261,9 @@ return 0
 }
 
 function category_summary () {
-# Prints a summary table of experience by category. Also builds search_field_index_list
-# and fields_list that are used later. Uses field_type_test function to determine if field
-# type is text, integer, or float. Date field (an integer) is excluded by using reg_word_date.
+# Creates search_field_index_list and fields_list. Uses field_type_test function to determine field
+# data type: text, integer, or float. The date field (an integer) is excluded via =~ reg_word_date. 
+# Creates a table of experience by category that is displayed by main menu option [2].
 
     fields_list=()
     text_field_index_list=()
@@ -259,6 +273,7 @@ function category_summary () {
     
     # get the number of data fields in the file header.
     len=$(head -1 "$EPOCH_LOG" | awk -F, '{print NF}')
+    
     local seperator="--------------------------------------"
     {
     printf " %-28s %-9s\n" "Category" "Totals"
@@ -291,12 +306,17 @@ function category_summary () {
 return 0
 }
 
-function display_data_fields () {
-# Displays tables of field information and leap-corrected dates. Development tool.
+function get_program_database_info () {
+# Displays program, database and date information. Development tool.
 
     local seperator="-------------------------------------------------------------"
     {
-    printf "%s %s\n\n" "Current Logbook Source File: " "$LOGBOOK_FILE"
+    printf "%s %s\n" "Operating System: " "$OS"
+    printf "%s %s\n" "Logbook Source File: " "$LOGBOOK_FILE"
+    printf "%s %s\n" "Search Database File: " "$EPOCH_LOG"
+    printf "%s %s\n\n" "Sort Method: " "$is_sorted"    
+    
+    printf "%s\n\n" "Table 1. Search Database Field Information."
     printf "%-26s %-15s %-15s\n" "field_name"  "field_index #" "array_index #"
     printf "%s\n" "$seperator"
     
@@ -310,15 +330,19 @@ function display_data_fields () {
     printf "%s %s\n" "Float fields: " "${float_field_index_list[*]}" 
     printf "%s %s\n\n\n" "Integer fields: " "${int_field_index_list[*]}"
     
-    local seperator="--------------------------------------"   
+    local seperator="--------------------------------------" 
+    
     printf "%s\n" "Current Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
-    printf "%-20s %-10s\n" " Recent Range" "Start Date"
+    printf "%s %s\n\n" "Maximum Recent Range Value Allowed: " "$max_range_val days" 
+    
+    printf "%s\n\n" "Table 2.Leap Year Corrected Recent Range Values and Corresponding Dates"
+    printf " %-10s %-9s %-13s\n" "Range" "Leaps" "Start Date"
     printf "%s\n" "$seperator"
     for i in "${!RECENT_RANGES[@]}"; do 
-        printf "   %-17s %-12s\n" "${RECENT_RANGES[$i]}" "$(format_date as_day "${EPOCH_LIST[$i]}")"
+        printf " %-12s %-7s %-12s\n" "${RECENT_RANGES[$i]}" "${leap_list[$i]}" "$(format_date as_day "${EPOCH_LIST[$i]}")"
     done
     printf "%s\n\n" "$seperator"
-    } >> $OUTPUT_FILE
+    } >> "$OUTPUT_FILE"
     
 return 0
 }
@@ -349,6 +373,8 @@ function list_sorter () {
         "chronological")
             # SOURCE: http://stackoverflow.com/questions/618378/
             perl -ne 'if (!defined $x{$_}) { print $_; $x{$_} = 1; }'
+            ;;
+        *)  printf "\n%s\n\n" "Error! Undefined Sort Method. Check is_sorted variable."
             ;;
     esac
        
@@ -422,7 +448,7 @@ function flight_experience_summary () {
     table_seperator
     printf "%s\n" "Current Search Start Date: $epoch_now_date"
     printf "%s\n\n" "Last Recorded Flight Date: $log_end_date"
-    } >> $OUTPUT_FILE
+    } >> "$OUTPUT_FILE"
     
 return 0
 }
@@ -473,7 +499,7 @@ function aircraft_type_summary () {
     printf "%s\n" "$seperator"
     printf " %s %67.1f\n" "Total" "$types_sum"
     printf "\n%s\n\n" "Results are $is_sorted. Use option [t] to change sort method."
-    } >> $OUTPUT_FILE
+    } >> "$OUTPUT_FILE"
     
 return 0
 }
@@ -503,7 +529,7 @@ function aircraft_id_summary () {
     printf "%s\n" "$seperator"
     printf " %s %39.1f\n" "Total" "$by_id_sum"
     printf "\n%s\n\n" "Results are $is_sorted. Use option [t] to change sort method."
-    } >> $OUTPUT_FILE
+    } >> "$OUTPUT_FILE"
     
 return 0
 }
@@ -536,32 +562,35 @@ function experience_by_year () {
     
     printf "%s\n" "$seperator"
     printf "%s %11.1f\n\n" "Total" "$by_year_total"
-    } >> $OUTPUT_FILE
+    } >> "$OUTPUT_FILE"
     
 return 0
 }
 
 function change_date () {
 # Sets a new start date & rebuilds the EPOCH_LIST.
-
-    printf "%s\n" "Current Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
-    printf "%s\n\n" "Last Recorded Flight Date: $log_end_date"
-
+    
+    printf "\n%s\n" "First Recorded Flight Date: $log_start_date"
+    printf "%s\n" "Last Recorded Flight Date: $log_end_date"
+    printf "%s\n\n" "Current Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
+    
     while true; do
         read -r -p "Enter YYYY-MM-DD | (t)oday | (l)ast flight date | enter to cancel: " new_date
         case $new_date in
         "") 
-            printf "%s\n\n" "Returning to main menu"
+            printf " %s\n\n" "Returning to main menu"
             return 0
             ;;
         "t") 
             _EPOCH_NOW=$(date +%s)
-            printf "%s\n\n" "New Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
+            set_ranges_limit
+            printf " %s\n\n" "New Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
             break
             ;;
         "l") 
             _EPOCH_NOW="$log_end_epoch"
-            printf "%s\n\n" "New Search Start Date: $log_end_date"
+            set_ranges_limit
+            printf " %s\n\n" "New Search Start Date: $log_end_date"
             break      
             ;;
             
@@ -569,14 +598,20 @@ function change_date () {
             if [[ "$new_date" =~ $reg_date ]]; then
                 is_valid=$(is_date_valid "$new_date")
                 if [[ "$is_valid" -eq 0 ]]; then
-                    _EPOCH_NOW=$(format_date as_epoch "$new_date 00:00:00")
-                    printf "%s\n\n" "New Search Start Date: $new_date"
-                    break
+                    log_start_test=$(format_date as_epoch "$new_date 23:59:59")
+                    if [[ "$log_start_test" -lt "$log_start_epoch" ]]; then
+                        printf " %s\n\n" "Invalid! Date is prior to the log start date: $log_start_date"
+                    else
+                        _EPOCH_NOW="$log_start_test"
+                        set_ranges_limit
+                        printf " %s\n\n" "New Search Start Date: $new_date"
+                        break
+                    fi
                 else
-                    printf "%s\n\n" "Invalid date or format!"
+                    printf " %s\n\n" "Invalid date or format!"
                 fi
             else
-                printf "%s\n\n" "Invalid date or format!"
+                printf " %s\n\n" "Invalid date or format!"
             fi
             ;;
         esac
@@ -625,27 +660,35 @@ function change_recent_ranges () {
         
         case $line in
             "") 
-                printf "%s\n\n" "Returning to main menu"
+                printf " %s\n\n" "Returning to main menu"
                 return 0
                 ;;
             "d") 
                 RECENT_RANGES=( $default_ranges )
                 break
                 ;;
-                
-            *)  # check if integer(s) >0 separated with spaces
+            *)  # check if 0 < integer(s) < max_range_val * separated with spaces
                 new_ranges=( $line )
                 check_list=()
+                 
                 for item in "${new_ranges[@]}"; do
                     if [[ "$item" =~ $reg_int_range ]]; then
-                        check_list+=( "True" )
+                    
+                        if [[ "$item" -le "$max_range_val" ]]; then
+                            check_list+=( "True" )
+                        else
+                            check_list+=( "maxrange" )
+                        fi
                     else
-                        check_list+=( "False" )
+                        check_list+=( "pattern" )
                     fi
+                    
                 done
-            
-                if [[ "${check_list[@]}" =~ False ]]; then
-                    printf "%s\n\n" "Invalid range values or format!"
+
+                if [[ "${check_list[*]}" =~ pattern ]]; then
+                    printf " %s\n\n" "Invalid range value(s) or format!"
+                elif [[ "${check_list[*]}" =~ maxrange ]]; then
+                      printf " %s\n\n" "Maximum allowed range value of $max_range_val exceeded!"
                 else  
                     RECENT_RANGES=( $(sort_custom_ranges "${new_ranges[@]}" ) )
                     break
@@ -653,18 +696,8 @@ function change_recent_ranges () {
                 ;;
         esac
     done
-    printf "%s\n\n" "Current range(s): ${RECENT_RANGES[*]}"   
+    printf " %s\n\n" "Current range(s): ${RECENT_RANGES[*]}"   
     build_epoch_list
-    
-return 0
-}
-
-function display_results () {
-# Sends OUTPUT_FILE and menu to stdout.
-
-    clear
-    cat $OUTPUT_FILE
-    menu
     
 return 0
 }
@@ -674,8 +707,8 @@ function save_to_file () {
 
     report_file="$launch_path/logbook_report_$(format_date as_day_time).txt"
     printf "%s\n\n" "Report created: $(date)" > "$report_file"    
-    cat $OUTPUT_FILE >> "$report_file"
-    printf "%s\n\n" "Results saved to:$report_file"
+    cat "$OUTPUT_FILE" >> "$report_file"
+    printf " %s\n\n" "Results saved to:$report_file"
     
 return 0
 }
@@ -689,18 +722,18 @@ function import_log_file () {
         
         case $new_db in
             "") 
-                printf "%s\n\n" "Returning to main menu"
+                printf " %s\n\n" "Returning to main menu"
                 return 0
                 ;;
             *)  
                 if [ -e "$new_db" ]; then
-                    LOGBOOK_FILE="${launch_path}"/"$new_db"
-                    printf "%s %s\n" "New logfile is: " "$LOGBOOK_FILE"
+                    LOGBOOK_FILE="$new_db"
+                    printf " %s %s\n" "New logfile is: " "$LOGBOOK_FILE"
                     RECENT_RANGES=( $default_ranges )
                     create_search_database
                     break
                 else
-                    printf "%s\n\n" "File not found! Check filename."
+                    printf " %s\n\n" "File not found! Check path or filename!"
                 fi
                 ;;
         esac
@@ -722,29 +755,19 @@ function toggle_sort_status () {
 return 0
 }
 
-function help_file () {
-# Displays the help.txt file or error if not found.
+function display_file () {
+# Displays file in $1 or error if not found.
 
-    if [ -e help.txt ]; then
+    if [ -e "$1" ]; then
         clear
-        more help.txt
+        if [[ "$1" = "$OUTPUT_FILE" ]]; then
+            cat "$1"
+        else
+            more "$1"
+        fi
     else
-        printf "%s\n\n" "Help file not found!"
+        printf "%s\n\n" "$1 file not found!"
     fi
-    
-return 0
-}
-
-function display_license () {
-# Displays the LICENSE.txt file or error if not found.
-
-    if [ -e LICENSE.txt ]; then
-        clear
-        more LICENSE.txt
-    else
-        printf "%s\n\n" "LICENSE file not found!"
-    fi
-    
 return 0
 }
 
@@ -808,31 +831,31 @@ startup_notice
 
 menu_item_list=( 1 2 3 4 5 6 d )
 while true; do
-    read -r -p "Enter Selection: " opt
+    read -r -p "Enter Selection (m for menu): " opt
     # modification of: http://stackoverflow.com/questions/8063228/
-    if [[ ${menu_item_list[@]} =~ $opt ]]; then
-        rm -f $OUTPUT_FILE
+    if [[ "${menu_item_list[*]}" =~ $opt ]]; then
+        rm -f "$OUTPUT_FILE"
     fi        
     case $opt in
         "1")
             flight_experience_summary
-            display_results
+            display_file "$OUTPUT_FILE"
             ;;
         "2")
             category_summary
-            display_results
+            display_file "$OUTPUT_FILE"
             ;;
         "3")
             aircraft_type_summary
-            display_results
+            display_file "$OUTPUT_FILE"
             ;;
         "4")
             aircraft_id_summary
-            display_results
+            display_file "$OUTPUT_FILE"
             ;;
         "5")
             experience_by_year
-            display_results
+            display_file "$OUTPUT_FILE"
             ;;
         "6")
             flight_experience_summary
@@ -840,7 +863,7 @@ while true; do
             aircraft_type_summary
             aircraft_id_summary
             experience_by_year
-            display_results
+            display_file "$OUTPUT_FILE"
             ;;
         "7")
             change_date
@@ -855,8 +878,8 @@ while true; do
             import_log_file
             ;; 
         "d"|"D")
-            display_data_fields
-            display_results
+            get_program_database_info
+            display_file "$OUTPUT_FILE"
             ;;
         "t"|"T")
             toggle_sort_status
@@ -866,20 +889,19 @@ while true; do
             menu start
             ;;
         "h"|"H")
-            help_file
+            display_file help.txt
             ;;
         "l"|"L")
-            clear
-            display_license
+            display_file LICENSE.txt
             ;;
         "q"|"Q")
             break
             ;;
-        *) printf "%s\n\n" "Invalid option!"
+        *) printf " %s\n\n" "Invalid option!"
             ;;
     esac
 done
-rm -f $OUTPUT_FILE
+rm -f "$OUTPUT_FILE"
 
 return 0
 } 
