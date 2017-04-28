@@ -11,6 +11,8 @@
     [8]  Custom Recent Experience Ranges        [q]  Quit
 
     
+    NUMERIC MENU OPTIONS
+    
     [1] Displays a table of total and recent flight experience based on the current
     recent-experience range values and the search start date. The default recent-experience 
     range values are: 30, 60, 90, 180, 365, 1825, 3650, and 7300 days; the default 
@@ -35,40 +37,50 @@
 
     [6] Displays tables [1]-[5] consecutively.
 
-    [7] Displays the following date information and sub-menu:
+    [7] Displays date information and a sub-menu as shown in the example below:
     
-        Current Search Start Date: YYYY-MM-DD
-        Last Recorded Flight Date: YYYY-MM-DD
+        First Recorded Flight Date: 1994-11-05
+        Last Recorded Flight Date: 2016-08-08
+        Current Search Start Date: 2010-09-02
+
 
         Enter YYYY-MM-DD | (t)oday | (l)ast flight date | enter to cancel:
 
     A custom search start date may be entered or the user may select the current 
     date with (t) or date of last flight with (l) then pressing enter. Pressing enter 
     with no response will cancel without chaning the current search start date.
-
-    [8] Displays the current recent-experience range values and the following sub-menu:
     
-        Current range(s): 30 60 90 180 365 1825 3650 7300
+    Note: a custom date prior to the first recorded flight date is not allowed.
 
-        Enter values separated by spaces | (d)efault ranges | enter to cancel:
+    [8] Displays the current recent-experience range values and sub-menu:
+    
+        Current range(s): 30 60 90 120 150 180 365
 
-    Custom range values are entered as integers seperated by spaces and may be 
-    entered in any order; unique values will be sorted ascending.
+        Enter values >0 separated by spaces | (d)efault ranges | enter to cancel:
+
+    Custom range values are entered on a single line as integers >0 seperated by spaces 
+    and may be entered in any order; unique values will be sorted ascending.
     
     The default values may be reset by selecting (d) then pressing enter. Pressing 
     enter with no response will cancel without chaning the current range values.
     
+    To permanmently set the default range values to your preferred values, edit the 
+    values listed for the variable named "default_ranges" in the DEFINITIONS section.
     
-    Note: Alphanumeric menu items are not case sensitive.
+    
+    ALPHABETICAL MENU OPTIONS
+
+    Note: The followng main menu items are not case sensitive:
 
     [s] Select this option to save the search results to a text file. A file
     named logbook_report_YYYY-MM-DD_%H%M%S.txt will be created in the directory 
     where the program was launched.
     
-    [i] Select this option to import a new logbook.csv file. Currently, the new
-    file must be in the same directory where the program was launched.
+    [i] Select this option to import a new logbook.csv file. The new file may
+    be either in the current directory or another directory that you specify
+    with an absolute path: (e.g. /home/username/another_dir/another_logbook.csv)
     
-    [d] A development tool. Displays database fields and date information.
+    [d] Displays program, database and date information.
        
     [t] Toggles the defualt sort method from chronological to alphabetical.
     
