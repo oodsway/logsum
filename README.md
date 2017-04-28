@@ -42,26 +42,27 @@ To start the program with your own logbook enter:
 
 ```./logsum your_logbook_filename```
 
-at the command prompt in the logsum directory. Be sure to read the section
-on the required field format for your logbook file.
+at the command prompt in the logsum directory. Be sure to read the section on the required field
+format for your logbook file.
 
 If your_logbook_filename is not specified, the program will start using the default
 logsum_demo.csv file. If neither file is found the program will exit with an error message.
 
-At startup, **logsum** will create a search database file **logbook_by_epoch.csv** in /tmp 
-from the logbook_filename.csv:
+At startup, **logsum** creates a hidden search database file **.logbook_by_epoch.csv** in the 
+directory where the program is executed. For example:
 
-```/tmp/logbook_by_epoch.csv```
+```/logsum/.logbook_by_epoch.csv```
 
-**logbook_by_epoch.csv** is a copy of the logbook file wherein dates have been converted to 
-unix epoch values. All date searches are performed using unix epoch values.
+**.logbook_by_epoch.csv** is a copy of the logbook.csv file wherein dates have been converted to 
+unix epoch values. All date-based searches are performed using unix epoch values. When a search
+is peformed, the results are displayed and stored in the hidden file **.logsum_results.txt**
+for optional saving to a logbook_report text file:
 
-When a search is peformed, the results are stored in the temporary file:
+```/logsum/.logsum_results.txt```
 
-```/tmp/logsum_results.txt```
-
-When the program quits, the results file is deleted. The search database is retained but is
-re-created upon restart to ensure current data is used.
+When the program quits, **.logsum_results.txt** is deleted. **.logbook_by_epoch.csv**
+is retained for user inspection; however, it is re-created upon restart to ensure current 
+data is always used.
 
 
 
