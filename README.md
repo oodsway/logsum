@@ -1,4 +1,4 @@
-# logsum
+## logsum
 
 **logsum is an Interactive, Command-Line Interface Pilot's Logbook Summary Tool for Linux, 
 DarwinBSD (macOS) and FreeBSD Operating Systems.**
@@ -14,7 +14,7 @@ Consult the help.txt file and experiment with the demo logbook to discover the v
 capabilities **logsum**.
 
 
-# Installation
+### Installation
 
 **Option 1**
 
@@ -30,7 +30,7 @@ it is not executable, make it executable from the terminal with:
 ```chmod +x logsum```
 
 
-# Use
+### Use
 
 To start the program with the demo database file, simply enter:
 
@@ -66,7 +66,7 @@ data is always used.
 
 
 
-# Logbook.csv File Format
+### Logbook.csv File Format
 
 The logbook source file must be a comma-seperated values (csv) file; however, the file is not
 required to have a .csv extension. The first row of the file must contain the field names (column
@@ -103,7 +103,7 @@ in the code. After field 13, you may add any additional data fields that you wis
 | Fuel (gal)                                | 22          |
 
 
-# Notes on the Date Field
+### Notes on the Date Field
 
 The Date field must be the first field (column) in the file and must be labeled with the word
 'Date' though it is not case sensitive.  Also, **logsum** has been tested extensively using
@@ -119,7 +119,7 @@ Additional fields may be included AFTER field 13 (Simulator) if there are specif
 that you wish to track e.g. fuel, fuel price, number pax, etc. A Remarks/Comments field will be 
 excluded automatically since the field will contain text.
 
-# Notes on Word-Splitting
+### Notes on Word-Splitting
 
 Text from fields 2 and 3 (Aircraft Make & Model and Aircraft Ident) is used to create summary
 tables of flight experience with each of these categories. Take care to avoid spaces within the
@@ -129,7 +129,7 @@ Aircraft Make & Model PA28-151 will succeed, but PA28 151 will not.
 Attempts to resolve this have thus far been unsuccessful; suggestions are welcomed.  For now,
 the best fix is to avoid spaces in the data in these fields.
 
-# ACKNOWLEDGEMENTS
+### ACKNOWLEDGEMENTS
 
 Many thanks to @koalaman for the [shellcheck](https://github.com/koalaman/shellcheck) tool. 
 This tool was invaluable in helping me with the project and advancing my understanding of BASH.
