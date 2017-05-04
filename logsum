@@ -141,10 +141,12 @@ return 0
 function epoch_engine () {
 # Creates EPOCH_LOG with header from LOGBOOK_FILE source.
 # Modification of: http://stackoverflow.com/questions/7965658/
+       
+    _EPOCH_NOW=$(format_date as_epoch "$(date +%F) 23:59:59")
+    set_ranges_limit
 
     printf "%s\n" "Creating the search database..."
     head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"
-    TZ=$(date +%Z)
 
     case "$OS" in
         "Linux")
@@ -162,10 +164,7 @@ function epoch_engine () {
             print }' "$LOGBOOK_FILE" >> "$EPOCH_LOG"
             ;;
     esac
-
-    _EPOCH_NOW=$(date +%s)
-    set_ranges_limit
-    
+       
     log_epoch_list=( $(get_field_list 1) )
     start_end=( $(get_min_max "${log_epoch_list[@]}") )
     log_start_epoch="${start_end[0]}"
@@ -187,8 +186,8 @@ function is_date_valid () {
             date -d "$1" &> /dev/null; echo $?
             ;;
         "Darwin"|"FreeBSD")
-            time_shift=$(date -v+1M -v-1M -jf "%F %T" "$1 00:00:00" +"%F %T" 2> /dev/null)
-            if [[ "$time_shift" == "$1 00:00:00" ]]; then
+            bsd_test=$(date -v+1M -v-1M -jf "%F %T" "$1 00:00:00" +"%F %T" 2> /dev/null)
+            if [[ "$bsd_test" == "$1 00:00:00" ]]; then
                 echo 0
             else
                 echo 1
@@ -330,17 +329,22 @@ function get_program_database_info () {
     printf "%s %s\n" "Float fields: " "${float_field_index_list[*]}" 
     printf "%s %s\n\n\n" "Integer fields: " "${int_field_index_list[*]}"
     
-    local seperator="--------------------------------------" 
-    
-    printf "%s\n" "Current Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
+    local seperator="---------------------------------------" 
+   
+    printf "%s\n" "Current value of _EPOCH_NOW: $_EPOCH_NOW"
+    printf "%s\n" "Current date of _EPOCH_NOW: $(format_date as_day "$_EPOCH_NOW")"
     printf "%s %s\n\n" "Maximum Recent Range Value Allowed: " "$max_range_val days" 
     
     printf "%s\n\n" "Table 2.Leap Year Corrected Recent Range Values and Corresponding Dates"
-    printf " %-10s %-9s %-13s\n" "Range" "Leaps" "Start Date"
+    printf " %-6s %-8s %-12s %-13s\n" "Range" "Leaps" "Date" "Epoch"
     printf "%s\n" "$seperator"
-    for i in "${!RECENT_RANGES[@]}"; do 
-        printf " %-12s %-7s %-12s\n" "${RECENT_RANGES[$i]}" "${leap_list[$i]}" "$(format_date as_day "${EPOCH_LIST[$i]}")"
+    
+    for i in "${!RECENT_RANGES[@]}"; do
+        zee_date=$(format_date as_day "${EPOCH_LIST[$i]}")
+        zee_epoch="${EPOCH_LIST[$i]}"
+        printf " %-7s %-4s %-12s %-15s\n" "${RECENT_RANGES[$i]}" "${leap_list[$i]}" "$zee_date" "$zee_epoch"
     done
+    
     printf "%s\n\n" "$seperator"
     } >> "$OUTPUT_FILE"
     
@@ -356,10 +360,10 @@ return 0
 }
 
 function get_epoch_range_sum () {
-# Calculates the sum for a given field between two epoch values then & now.
+# Calculate the sum of the field number in $3 between epoch values t_upper in $1 and t_lower in $2.
 
-    awk -F, -v now="$1" -v then="$2" -v field="$3" '{if ($1>=then && $1<=now) {s+=$field} } END {print s}' "$EPOCH_LOG"
-
+    awk -F, -v t_upper="$1" -v t_lower="$2" -v field="$3" '{if (t_upper>=$1 && $1>=t_lower) {s+=$field} } END {print s}' "$EPOCH_LOG"
+    
 return 0
 }
 
@@ -418,12 +422,14 @@ function flight_experience_summary () {
  
         # determine bounds & the recent_experience value then add to recent_exp_list
         for search_epoch in "${EPOCH_LIST[@]}"; do
+            
             if [[ "$search_epoch" -gt "$log_end_epoch" || "$_EPOCH_NOW" -lt "$log_start_epoch" ]]; then            
                 value=0
             else
                 value=$(get_epoch_range_sum "$_EPOCH_NOW" "$search_epoch" "$index")
                 if [ "$value" = "" ]; then value=0; fi
             fi
+            
             recent_exp_list+=( "$value"  )                                    
         done
 
@@ -582,18 +588,17 @@ function change_date () {
             return 0
             ;;
         "t") 
-            _EPOCH_NOW=$(date +%s)
+            _EPOCH_NOW=$(format_date as_epoch "$(date +%F) 23:59:59")
             set_ranges_limit
             printf " %s\n\n" "New Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
             break
             ;;
         "l") 
-            _EPOCH_NOW="$log_end_epoch"
+            _EPOCH_NOW=$(format_date as_epoch "$log_end_date 23:59:59")
             set_ranges_limit
             printf " %s\n\n" "New Search Start Date: $log_end_date"
             break      
             ;;
-            
         *)  # validate YYYY-MM-DD format vs reg_date then test if date is valid
             if [[ "$new_date" =~ $reg_date ]]; then
                 is_valid=$(is_date_valid "$new_date")
@@ -602,7 +607,7 @@ function change_date () {
                     if [[ "$log_start_test" -lt "$log_start_epoch" ]]; then
                         printf " %s\n\n" "Invalid! Date is prior to the log start date: $log_start_date"
                     else
-                        _EPOCH_NOW="$log_start_test"
+                        _EPOCH_NOW="$log_start_test"                       
                         set_ranges_limit
                         printf " %s\n\n" "New Search Start Date: $new_date"
                         break
