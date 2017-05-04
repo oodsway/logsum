@@ -141,9 +141,6 @@ return 0
 function epoch_engine () {
 # Creates EPOCH_LOG with header from LOGBOOK_FILE source.
 # Modification of: http://stackoverflow.com/questions/7965658/
-       
-    _EPOCH_NOW=$(format_date as_epoch "$(date +%F) 23:59:59")
-    set_ranges_limit
 
     printf "%s\n" "Creating the search database..."
     head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"
@@ -164,6 +161,9 @@ function epoch_engine () {
             print }' "$LOGBOOK_FILE" >> "$EPOCH_LOG"
             ;;
     esac
+       
+    _EPOCH_NOW=$(format_date as_epoch "$(date +%F) 23:59:59")
+    set_ranges_limit
        
     log_epoch_list=( $(get_field_list 1) )
     start_end=( $(get_min_max "${log_epoch_list[@]}") )
