@@ -273,10 +273,10 @@ function category_summary () {
     # get the number of data fields in the file header.
     len=$(head -1 "$EPOCH_LOG" | awk -F, '{print NF}')
     
-    local seperator="--------------------------------------"
+    local separator="--------------------------------------"
     {
     printf " %-28s %-9s\n" "Category" "Totals"
-    printf "%s\n" "$seperator"
+    printf "%s\n" "$separator"
 
     for (( i=1; i<=len; i++ )); do
         field_sum=$(awk -F, -v fld="$i" '{ {sum+=$fld} } END {print sum}' "$EPOCH_LOG")
@@ -299,7 +299,7 @@ function category_summary () {
             search_field_index_list+=( "$i" )        
         fi
     done
-    printf "%s\n\n" "$seperator"
+    printf "%s\n\n" "$separator"
     } >> "$OUTPUT_FILE"
     
 return 0
@@ -308,7 +308,7 @@ return 0
 function get_program_database_info () {
 # Displays program, database and date information. Development tool.
 
-    local seperator="-------------------------------------------------------------"
+    local separator="-------------------------------------------------------------"
     {
     printf "%s %s\n" "Operating System: " "$OS"
     printf "%s %s\n" "Logbook Source File: " "$LOGBOOK_FILE"
@@ -317,19 +317,19 @@ function get_program_database_info () {
     
     printf "%s\n\n" "Table 1. Search Database Field Information."
     printf "%-26s %-15s %-15s\n" "field_name"  "field_index #" "array_index #"
-    printf "%s\n" "$seperator"
+    printf "%s\n" "$separator"
     
     for i in "${!fields_list[@]}"; do
         printf " %-30s %-15s %-15s\n" "${fields_list[$i]}" "$((i+1))" "$i" 
     done
     
-    printf "%s\n" "$seperator"
+    printf "%s\n" "$separator"
     printf "%s %s\n" "Fields in use: " "${search_field_index_list[*]}"      
     printf "%s %s\n" "Text fields:" "${text_field_index_list[*]}" 
     printf "%s %s\n" "Float fields: " "${float_field_index_list[*]}" 
     printf "%s %s\n\n\n" "Integer fields: " "${int_field_index_list[*]}"
     
-    local seperator="---------------------------------------" 
+    local separator="---------------------------------------" 
    
     printf "%s\n" "Current value of _EPOCH_NOW: $_EPOCH_NOW"
     printf "%s\n" "Current date of _EPOCH_NOW: $(format_date as_day "$_EPOCH_NOW")"
@@ -337,7 +337,7 @@ function get_program_database_info () {
     
     printf "%s\n\n" "Table 2.Leap Year Corrected Recent Range Values and Corresponding Dates"
     printf " %-6s %-8s %-12s %-13s\n" "Range" "Leaps" "Date" "Epoch"
-    printf "%s\n" "$seperator"
+    printf "%s\n" "$separator"
     
     for i in "${!RECENT_RANGES[@]}"; do
         zee_date=$(format_date as_day "${EPOCH_LIST[$i]}")
@@ -345,7 +345,7 @@ function get_program_database_info () {
         printf " %-7s %-4s %-12s %-15s\n" "${RECENT_RANGES[$i]}" "${leap_list[$i]}" "$zee_date" "$zee_epoch"
     done
     
-    printf "%s\n\n" "$seperator"
+    printf "%s\n\n" "$separator"
     } >> "$OUTPUT_FILE"
     
 return 0
@@ -385,13 +385,13 @@ function list_sorter () {
 return 0
 }
 
-function table_seperator () {
-# Prints a variable-length line seperator dependent on the length of RECENT_RANGES array.
+function table_separator () {
+# Prints a variable-length line separator dependent on the length of RECENT_RANGES array.
 
-    local seperator="--------"
+    local separator="--------"
     printf "%s" "-------------------------------"
     for ((i=0; i<=${#RECENT_RANGES[@]}-1; i++)); do 
-        printf "%s" "$seperator"
+        printf "%s" "$separator"
     done
     printf "\n"
     
@@ -414,7 +414,7 @@ function flight_experience_summary () {
         printf "   %s " "${RECENT_RANGES[$i]}"
     done
     printf "days\n"
-    table_seperator
+    table_separator
     
     for index in "${search_field_index_list[@]}"; do
         field_name="${fields_list[index-1]}"
@@ -451,7 +451,7 @@ function flight_experience_summary () {
        unset recent_exp_list   
     done
             
-    table_seperator
+    table_separator
     printf "%s\n" "Current Search Start Date: $epoch_now_date"
     printf "%s\n\n" "Last Recorded Flight Date: $log_end_date"
     } >> "$OUTPUT_FILE"
@@ -463,10 +463,10 @@ function aircraft_type_summary () {
 # Creates summary table of flight experience by aircraft type with list of aircraft IDs for each type.
 
     AIRCRAFT_TYPE_LIST=( $(get_field_list 2 | list_sorter ) )
-    local seperator="--------------------------------------------------------------------------------"
+    local separator="--------------------------------------------------------------------------------"
     {
     printf "%s\n" " Aircraft Type        Aircraft IDs                               Flight Time (h)"
-    printf "%s\n" "$seperator"
+    printf "%s\n" "$separator"
     
     type_times=( )
     for aircraft_type in "${AIRCRAFT_TYPE_LIST[@]}"; do
@@ -502,7 +502,7 @@ function aircraft_type_summary () {
     done
     types_sum=$(get_array_sum "${type_times[*]}")
     
-    printf "%s\n" "$seperator"
+    printf "%s\n" "$separator"
     printf " %s %67.1f\n" "Total" "$types_sum"
     printf "\n%s\n\n" "Results are $is_sorted. Use option [t] to change sort method."
     } >> "$OUTPUT_FILE"
@@ -514,10 +514,10 @@ function aircraft_id_summary () {
 # Creates summary table of flight experience by aircraft ID including aircraft type.
 
     AIRCRAFT_ID_LIST=( $(get_field_list 3 | list_sorter) ) 
-    local seperator="-------------------------------------------------------"
+    local separator="-------------------------------------------------------"
     {
     printf "%s\n" " Aircraft ID       Aircraft Type      Flight Time (h)"
-    printf "%s\n" "$seperator"
+    printf "%s\n" "$separator"
 
     id_times=( )
     for aircraft_id in "${AIRCRAFT_ID_LIST[@]}"; do
@@ -532,7 +532,7 @@ function aircraft_id_summary () {
     done
     by_id_sum=$(get_array_sum "${id_times[*]}")
     
-    printf "%s\n" "$seperator"
+    printf "%s\n" "$separator"
     printf " %s %39.1f\n" "Total" "$by_id_sum"
     printf "\n%s\n\n" "Results are $is_sorted. Use option [t] to change sort method."
     } >> "$OUTPUT_FILE"
@@ -543,10 +543,10 @@ return 0
 function experience_by_year () {
 # Creates summary table of flight experience by year.
 
-    local seperator="------------------------"
+    local separator="------------------------"
     {
     printf "%23s\n" "Year | Flight Time (h)"
-    printf "%s\n" "$seperator"
+    printf "%s\n" "$separator"
     
     a="$(format_date get_year "$log_start_epoch")"
     z="$(format_date get_year "$log_end_epoch")"
@@ -566,7 +566,7 @@ function experience_by_year () {
     done
     by_year_total=$(get_array_sum "${by_year_sums[*]}")
     
-    printf "%s\n" "$seperator"
+    printf "%s\n" "$separator"
     printf "%s %11.1f\n\n" "Total" "$by_year_total"
     } >> "$OUTPUT_FILE"
     
@@ -794,11 +794,11 @@ return 0
 function menu () {
 # Displays the full menu at start or menu choices between functions.
 
-local seperator="--------------------------------------------------------------------------------"
+local separator="--------------------------------------------------------------------------------"
 if [ "$1" = "start" ]; then
-    printf "%s\n"   "$seperator"
+    printf "%s\n"   "$separator"
     printf "%s\n"   "                            Pilot's Logbook Summary Menu"
-    printf "%s\n"   "$seperator"
+    printf "%s\n"   "$separator"
 fi
 
 cat << 'EOF'
