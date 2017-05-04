@@ -8,6 +8,8 @@ logsum_stats
 variable_list.txt
 logbook_report*
 issues*
+logbook_by_epoch_mac.csv
+logbook_by_epoch_nix.csv
 
 # Hidden
 .DS_Store
