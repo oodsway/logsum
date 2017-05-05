@@ -312,7 +312,10 @@ function get_program_database_info () {
     {
     printf "%s %s\n" "Operating System: " "$OS"
     printf "%s %s\n" "Logbook Source File: " "$LOGBOOK_FILE"
+    printf "%s %s\n" "Logbook Start Date (Epoch): " "$log_start_date ($log_start_epoch)"
+    printf "%s %s\n" "Logbook End Date (Epoch): " "$log_end_date ($log_end_epoch)"
     printf "%s %s\n" "Search Database File: " "$EPOCH_LOG"
+    printf "%s %s\n" "Results File: " "$OUTPUT_FILE"
     printf "%s %s\n\n" "Sort Method: " "$is_sorted"    
     
     printf "%s\n\n" "Table 1. Search Database Field Information."
