@@ -1,6 +1,6 @@
 # Files
+_*
 logsum*
-reg_int_range_test*
 changelog.txt
 codeonly.txt
 functions_list.txt
@@ -8,8 +8,21 @@ logsum_stats
 variable_list.txt
 logbook_report*
 issues*
-logbook_by_epoch_mac.csv
-logbook_by_epoch_nix.csv
+test*
+
+# Directories
+development/
+deprecated_versions/
+flight_summary_reports/
+logbookpro/
+logshare/
+mac_logsum/
+my_logbook/
+screenshots/
+testing/
+time_shift_tests/
+word-split_fixing/
+
 
 # Hidden
 .DS_Store
