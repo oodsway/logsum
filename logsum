@@ -34,13 +34,32 @@ fi
 launch_path=$(pwd)
 demo_logbook="${launch_path}"/logsum_demo.csv
 
-if [ -e "$1" ]; then
-    LOGBOOK_FILE="$1"
-elif [ -e "$demo_logbook" ]; then
+if [[ "$1" = "" && -f "$demo_logbook" ]]; then
     LOGBOOK_FILE="$demo_logbook"
+elif [[ "$1" != "" && -f "$1" ]]; then
+    LOGBOOK_FILE="$1"   
 else
-    printf "%s\n\n" "Source Logbook File Not Found! Exiting..."
-    exit 1
+    if [[ "$1" = "" ]]; then
+        read_db="$demo_logbook"
+    else
+        read_db="$1"
+    fi
+    
+    while true; do
+        printf "%s\n\n" "$read_db not found! Check the path and filename."
+        read -r -p "Enter filename | (d) for demo | (q) to quit: " read_db
+            
+        if [[ "$read_db" = "q" || "$read_db" = "Q" ]]; then
+            printf "%s\n\n" "Program terminated by user."
+            exit 0
+        elif [[ "$read_db" = "d" || "$read_db" = "D" && -f "$demo_logbook" ]]; then
+            LOGBOOK_FILE="$demo_logbook"
+            break
+        elif [[ -f "$read_db" ]]; then
+            LOGBOOK_FILE="$read_db"
+            break 
+        fi
+    done
 fi
 
 # DEFINITIONS:
@@ -50,6 +69,7 @@ _SEC_IN_DAY=$((3600 * 24))
 default_ranges="30 60 90 180 365 1825 3650 7300" 
 RECENT_RANGES=( $default_ranges )
 is_sorted="chronological"
+is_verified=""
 reg_text='[A-Za-z]'
 reg_int='^[0-9]+$'
 reg_int_range='(^[1-9 ]+$)|(^[1-9 ][0-9 ]+$)' 
@@ -99,6 +119,48 @@ function format_date () {
 return 0
 }
 
+function is_date_valid () {
+# Returns 0 for valid date; 1 for invalid.
+# Modification of: http://stackoverflow.com/questions/10759162/
+
+    case "$OS" in
+        "Linux")
+            date -d "$1" &> /dev/null; echo $?
+            ;;
+        "Darwin"|"FreeBSD")
+            bsd_test=$(date -v+1M -v-1M -jf "%F %T" "$1 00:00:00" +"%F %T" 2> /dev/null)
+            if [[ "$bsd_test" == "$1 00:00:00" ]]; then
+                echo 0
+            else
+                echo 1
+            fi
+            ;;
+    esac
+}
+
+function verify_source_format () {
+# Verifies source-file date field format. Returns 0 if valid, 1 if invalid.
+
+    header_val=$(head -1 "$1" | awk -F, '{print $1}')
+    dates_list=( $(awk -F, 'FNR>1 {print $1}' "$1") )
+    log_len="${#dates_list[@]}"
+    
+    if [[ "$log_len" -ge 1 && "$header_val" =~ $reg_word_date ]]; then
+        for cell_val in "${dates_list[@]}"; do
+            if ! [[ "$cell_val" =~ $reg_date && "$(is_date_valid "$cell_val")" -eq 0 ]]; then
+                echo 1
+                return 0
+            fi
+        done
+    else
+        echo 1
+        return 0
+    fi
+    echo 0
+    
+return 0
+}
+
 function get_field_list () {
 # Returns values for target_field in $1.
 
@@ -142,8 +204,18 @@ function epoch_engine () {
 # Creates EPOCH_LOG with header from LOGBOOK_FILE source.
 # Modification of: http://stackoverflow.com/questions/7965658/
 
-    printf "%s\n" "Creating the search database..."
-    head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"
+    if [[ "$is_verified" = "" ]]; then
+        printf "%s\n" "Verifying source file format..."
+        is_verified=$(verify_source_format "$LOGBOOK_FILE")
+    fi
+
+    if [[ "$is_verified" -eq 1 ]]; then
+        printf "\n%s\n\n" "Source File Format Error! Terminating..."
+        exit 1
+    else
+        printf "%s" "Creating the search database..."
+        head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"
+    fi
 
     case "$OS" in
         "Linux")
@@ -161,6 +233,7 @@ function epoch_engine () {
             print }' "$LOGBOOK_FILE" >> "$EPOCH_LOG"
             ;;
     esac
+    printf "%s\n" "...ready"
        
     _EPOCH_NOW=$(format_date as_epoch "$(date +%F) 23:59:59")
     set_ranges_limit
@@ -172,29 +245,9 @@ function epoch_engine () {
     
     log_start_date=$(format_date as_day "$log_start_epoch")
     log_end_date=$(format_date as_day "$log_end_epoch")
-    printf "%s\n" "Search database creation completed."
     
 return 0
 }    
-
-function is_date_valid () {
-# Returns 0 for valid date; 1 for invalid.
-# Modification of: http://stackoverflow.com/questions/10759162/
-
-    case "$OS" in
-        "Linux")
-            date -d "$1" &> /dev/null; echo $?
-            ;;
-        "Darwin"|"FreeBSD")
-            bsd_test=$(date -v+1M -v-1M -jf "%F %T" "$1 00:00:00" +"%F %T" 2> /dev/null)
-            if [[ "$bsd_test" == "$1 00:00:00" ]]; then
-                echo 0
-            else
-                echo 1
-            fi
-            ;;
-    esac
-}
 
 function is_year_leap () {
 # Returns False if common year; True if leap year.
@@ -315,7 +368,6 @@ function get_program_database_info () {
     printf "%s %s\n" "Logbook Start Date (Epoch): " "$log_start_date ($log_start_epoch)"
     printf "%s %s\n" "Logbook End Date (Epoch): " "$log_end_date ($log_end_epoch)"
     printf "%s %s\n" "Search Database File: " "$EPOCH_LOG"
-    printf "%s %s\n" "Results File: " "$OUTPUT_FILE"
     printf "%s %s\n\n" "Sort Method: " "$is_sorted"    
     
     printf "%s\n\n" "Table 1. Search Database Field Information."
@@ -730,18 +782,27 @@ function import_log_file () {
         
         case $new_db in
             "") 
-                printf " %s\n\n" "Returning to main menu"
+                printf "%s\n\n" "Returning to main menu"
                 return 0
                 ;;
             *)  
-                if [ -e "$new_db" ]; then
-                    LOGBOOK_FILE="$new_db"
-                    printf " %s %s\n" "New logfile is: " "$LOGBOOK_FILE"
-                    RECENT_RANGES=( $default_ranges )
-                    create_search_database
-                    break
+                if [ -f "$new_db" ]; then
+                    printf "%s" "Verifying source file format..."
+                    is_verified=$(verify_source_format "$new_db")
+                
+                    if [[ "$is_verified" -eq 1 ]]; then
+                        printf "\n %s\n" "Source File Format Error! Enter another source file or cancel" 
+                    else
+                        LOGBOOK_FILE="$new_db"
+                        printf "%s\n" "OK"
+                        printf "%s %s\n" "New logfile is: " "$LOGBOOK_FILE"
+                        RECENT_RANGES=( $default_ranges )
+                        create_search_database
+                        break
+                    fi
+
                 else
-                    printf " %s\n\n" "File not found! Check path or filename!"
+                    printf " %s\n\n" "$new_db not found! Check path or filename!"
                 fi
                 ;;
         esac
@@ -766,7 +827,7 @@ return 0
 function display_file () {
 # Displays file in $1 or error if not found.
 
-    if [ -e "$1" ]; then
+    if [ -f "$1" ]; then
         clear
         if [[ "$1" = "$OUTPUT_FILE" ]]; then
             cat "$1"
