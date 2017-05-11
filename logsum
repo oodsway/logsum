@@ -36,8 +36,10 @@ demo_logbook="${launch_path}"/logsum_demo.csv
 
 if [[ "$1" = "" && -f "$demo_logbook" ]]; then
     LOGBOOK_FILE="$demo_logbook"
+    is_verified=0
 elif [[ "$1" != "" && -f "$1" ]]; then
-    LOGBOOK_FILE="$1"   
+    LOGBOOK_FILE="$1"
+    is_verified=""
 else
     if [[ "$1" = "" ]]; then
         read_db="$demo_logbook"
@@ -54,9 +56,11 @@ else
             exit 0
         elif [[ "$read_db" = "d" || "$read_db" = "D" && -f "$demo_logbook" ]]; then
             LOGBOOK_FILE="$demo_logbook"
+            is_verified=0
             break
         elif [[ -f "$read_db" ]]; then
             LOGBOOK_FILE="$read_db"
+            is_verified=""
             break 
         fi
     done
@@ -69,7 +73,6 @@ _SEC_IN_DAY=$((3600 * 24))
 default_ranges="30 60 90 180 365 1825 3650 7300" 
 RECENT_RANGES=( $default_ranges )
 is_sorted="chronological"
-is_verified=""
 reg_text='[A-Za-z]'
 reg_int='^[0-9]+$'
 reg_int_range='(^[1-9 ]+$)|(^[1-9 ][0-9 ]+$)' 
@@ -786,7 +789,7 @@ function import_log_file () {
                 return 0
                 ;;
             *)  
-                if [ -f "$new_db" ]; then
+                if [[ -f "$new_db" ]]; then
                     printf "%s" "Verifying source file format..."
                     is_verified=$(verify_source_format "$new_db")
                 
