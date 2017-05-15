@@ -52,7 +52,7 @@ will terminate with an error message. Be sure to read the section on the require
 format for your_logbook_file. File format verifciation is also performed while importing a new logbook file.
 
 If your_logbook_filename is not specified, the program will start using the default
-logsum_demo.csv file. If your_logbook_filename is not found the program presents the following dialog:
+logsum_demo.csv file. If your_logbook_filename is not found, the program presents the following dialog:
 
 ```
 your_logbook_filename not found! Check the path and filename.
@@ -119,8 +119,19 @@ in the code. After field 13, you may add any additional data fields that you wis
 
 ### Notes on the Date Field
 
-The Date field must be the first field (column) in the file and must be labeled with the word
-'Date' though it is not case sensitive and be in the format: YYYY-MM-DD
+The Date field must be the first field (column) and have the format: YYYY-MM-DD. 
+The field must be labeled with the word 'Date' but is not case sensitive. File format
+verification includes date and heading format and that at least one record exists.
+
+If verification fails during startup, the program will exit with an error message.
+Failure during file import displays the following dialog:
+
+```
+Verifying source file format...
+ Source File Format Error! Enter another source file or cancel
+Enter Filename or press Enter to cancel:
+```
+providing the opportunity to import another file or cancel to retain the current file.
 
 Other field names may vary (e.g. Time in Flight == Duration). The field "Legs" comes from
 LogbookPro and is the number of legs or flights. Even if "Legs" is not a field you use,
