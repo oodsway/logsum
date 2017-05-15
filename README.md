@@ -29,6 +29,10 @@ it is not executable, make it executable from the terminal with:
 
 ```chmod +x logsum```
 
+or 
+
+```chmod 755 logsum```
+
 
 ### Program Use
 
