@@ -30,7 +30,7 @@ it is not executable, make it executable from the terminal with:
 ```chmod +x logsum```
 
 
-### Use
+### Program Use
 
 To start the program with the demo database file, simply enter:
 
@@ -42,11 +42,23 @@ To start the program with your own logbook enter:
 
 ```./logsum your_logbook_filename```
 
-at the command prompt in the logsum directory. Be sure to read the section on the required field
-format for your logbook file.
+at the command prompt in the logsum directory. To ensure the date field format is correct,
+your_logbook_file will be verified during program startup. If the format is invalid, the program
+will terminate with an error message. Be sure to read the section on the required field
+format for your_logbook_file. File format verifciation is also performed while importing a new logbook file.
 
 If your_logbook_filename is not specified, the program will start using the default
-logsum_demo.csv file. If neither file is found the program will exit with an error message.
+logsum_demo.csv file. If your_logbook_filename is not found the program presents the following dialog:
+
+```
+
+your_logbook_filename not found! Check the path and filename.
+
+Enter filename | (d) for demo | (q) to quit: 
+
+```
+
+providing the opportunity to re-enter a filename, select the demo database or quit the program.
 
 At startup, **logsum** creates a hidden search database file **.logbook_by_epoch.csv** in the 
 directory where the program is executed. For example:
@@ -106,17 +118,16 @@ in the code. After field 13, you may add any additional data fields that you wis
 ### Notes on the Date Field
 
 The Date field must be the first field (column) in the file and must be labeled with the word
-'Date' though it is not case sensitive.  Also, **logsum** has been tested extensively using
-the date format: YYYY-MM-DD, so this is the recommended date format for the csv file.
+'Date' though it is not case sensitive and be in the format: YYYY-MM-DD
 
-The other field names can vary (e.g. Time in Flight == Duration). The field "Legs" comes from
+Other field names may vary (e.g. Time in Flight == Duration). The field "Legs" comes from
 LogbookPro and is the number of legs or flights. Even if "Legs" is not a field you use,
 it is a required field. You may exclude it by placing any text in the first cell below the heading 
 (e.g. MT for empty) and **logsum** will ignore the field. Alternatively, if you wish to track
-this field, you could fill the column with a 1 for each entry and logsum will include the field.
+this field, you could include valid integer values and logsum will include the field.
 
-Additional fields may be included AFTER field 13 (Simulator) if there are specific values recorded
-that you wish to track e.g. fuel, fuel price, number pax, etc. A Remarks/Comments field will be 
+Optional fields may be included AFTER field 13 (Simulator) if there are specific values recorded
+that you wish to track e.g. fuel, fuel price, number pax, etc. Any Remarks/Comments field will be 
 excluded automatically since the field will contain text.
 
 ### Notes on Word-Splitting
@@ -126,10 +137,10 @@ tables of flight experience with each of these categories. Take care to avoid sp
 data in these fields as word-splitting will occur and lead to erroneous results. For example
 Aircraft Make & Model PA28-151 will succeed, but PA28 151 will not.
 
-Attempts to resolve this have thus far been unsuccessful; suggestions are welcomed.  For now,
+Attempts to resolve word-splitting have thus far been unsuccessful; suggestions are welcomed.  For now,
 the best fix is to avoid spaces in the data in these fields.
 
-### ACKNOWLEDGEMENTS
+### Acknowledgements
 
 Many thanks to @koalaman for the [shellcheck](https://github.com/koalaman/shellcheck) tool. 
 This tool was invaluable in helping me with the project and advancing my understanding of BASH.
