@@ -51,11 +51,9 @@ If your_logbook_filename is not specified, the program will start using the defa
 logsum_demo.csv file. If your_logbook_filename is not found the program presents the following dialog:
 
 ```
-
 your_logbook_filename not found! Check the path and filename.
 
 Enter filename | (d) for demo | (q) to quit: 
-
 ```
 
 providing the opportunity to re-enter a filename, select the demo database or quit the program.
