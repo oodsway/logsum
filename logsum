@@ -367,6 +367,8 @@ function get_program_database_info () {
     local separator="-------------------------------------------------------------"
     {
     printf "%s %s\n" "Operating System: " "$OS"
+    printf "%s %s\n" "Shell: " "$SHELL"
+    printf "%s %s\n" "Launch path: " "$launch_path"
     printf "%s %s\n" "Logbook Source File: " "$LOGBOOK_FILE"
     printf "%s %s\n" "Logbook Start Date (Epoch): " "$log_start_date ($log_start_epoch)"
     printf "%s %s\n" "Logbook End Date (Epoch): " "$log_end_date ($log_end_epoch)"
