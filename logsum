@@ -33,14 +33,11 @@ fi
 
 launch_path=$(pwd)
 demo_logbook="${launch_path}"/logsum_demo.csv
+verified_files=( "logsum_demo.csv" "logsum_demo_descending.csv" "logshare_demo.csv" )
 
-if [[ "$1" = "" && -f "$demo_logbook" ]]; then
-    LOGBOOK_FILE="$demo_logbook"
-    is_verified=0
-elif [[ "$1" != "" && -f "$1" ]]; then
-    LOGBOOK_FILE="$1"
-    is_verified=""
-else
+function prompt_user () {
+# Prompt user to enter a valid filename, select demo or quit.
+
     if [[ "$1" = "" ]]; then
         read_db="$demo_logbook"
     else
@@ -54,16 +51,28 @@ else
         if [[ "$read_db" = "q" || "$read_db" = "Q" ]]; then
             printf "%s\n\n" "Program terminated by user."
             exit 0
-        elif [[ "$read_db" = "d" || "$read_db" = "D" && -f "$demo_logbook" ]]; then
-            LOGBOOK_FILE="$demo_logbook"
-            is_verified=0
-            break
+        elif [[ "$read_db" = "d" || "$read_db" = "D" ]]; then
+            if [[ -f "$demo_logbook" ]]; then
+                LOGBOOK_FILE="$demo_logbook"
+                break
+            else
+                read_db="$demo_logbook"
+            fi
         elif [[ -f "$read_db" ]]; then
             LOGBOOK_FILE="$read_db"
-            is_verified=""
             break 
         fi
     done
+    
+return 0    
+}
+
+if [[ "$1" = "" && -f "$demo_logbook" ]]; then
+    LOGBOOK_FILE="$demo_logbook"
+elif [[ "$1" != "" && -f "$1" ]]; then
+    LOGBOOK_FILE="$1"
+else
+    prompt_user "$1"
 fi
 
 # DEFINITIONS:
@@ -144,11 +153,12 @@ function is_date_valid () {
 function verify_source_format () {
 # Verifies source-file date field format. Returns 0 if valid, 1 if invalid.
 
+    header_len=$(head -1 "$1" | awk -F, '{print NF}')
     header_val=$(head -1 "$1" | awk -F, '{print $1}')
     dates_list=( $(awk -F, 'FNR>1 {print $1}' "$1") )
     log_len="${#dates_list[@]}"
     
-    if [[ "$log_len" -ge 1 && "$header_val" =~ $reg_word_date ]]; then
+    if [[ "$header_len" -ge 13 && "$header_val" =~ $reg_word_date && "$log_len" -ge 1 ]]; then
         for cell_val in "${dates_list[@]}"; do
             if ! [[ "$cell_val" =~ $reg_date && "$(is_date_valid "$cell_val")" -eq 0 ]]; then
                 echo 1
@@ -206,19 +216,21 @@ return 0
 function epoch_engine () {
 # Creates EPOCH_LOG with header from LOGBOOK_FILE source.
 # Modification of: http://stackoverflow.com/questions/7965658/
-
-    if [[ "$is_verified" = "" ]]; then
-        printf "%s\n" "Verifying source file format..."
-        is_verified=$(verify_source_format "$LOGBOOK_FILE")
+      
+    if ! [[ "${verified_files[*]}" =~ ${LOGBOOK_FILE##*/} ]]; then
+        printf "%s" "Verifying source file format..."       
+        if [[ "$(verify_source_format "$LOGBOOK_FILE")" -eq 0 ]]; then
+            printf "%s\n" "...OK"
+            verified_files+=( ${LOGBOOK_FILE##*/} )
+        else
+            printf "%s\n" "...FAILED"
+            printf "%s\n\n" "Source File Format Error! Terminating..."
+            exit 1
+        fi
     fi
 
-    if [[ "$is_verified" -eq 1 ]]; then
-        printf "\n%s\n\n" "Source File Format Error! Terminating..."
-        exit 1
-    else
-        printf "%s" "Creating the search database..."
-        head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"
-    fi
+    printf "%s" "Creating the search database..."
+    head -1 "$LOGBOOK_FILE" > "$EPOCH_LOG"   
 
     case "$OS" in
         "Linux")
@@ -370,6 +382,12 @@ function get_program_database_info () {
     printf "%s %s\n" "Shell: " "$SHELL"
     printf "%s %s\n" "Launch path: " "$launch_path"
     printf "%s %s\n" "Logbook Source File: " "$LOGBOOK_FILE"
+    
+    printf "%s\n" "Verified files: "
+    for item in "${verified_files[@]}"; do
+        printf "%s\n" " -> $item"
+    done
+    
     printf "%s %s\n" "Logbook Start Date (Epoch): " "$log_start_date ($log_start_epoch)"
     printf "%s %s\n" "Logbook End Date (Epoch): " "$log_end_date ($log_end_epoch)"
     printf "%s %s\n" "Search Database File: " "$EPOCH_LOG"
@@ -641,7 +659,7 @@ function change_date () {
     printf "%s\n\n" "Current Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
     
     while true; do
-        read -r -p "Enter YYYY-MM-DD | (t)oday | (l)ast flight date | enter to cancel: " new_date
+        read -r -p "Enter YYYY-MM-DD | (t)oday | (f)irst, (l)ast, (r)andom flight date | enter to cancel: " new_date
         case $new_date in
         "") 
             printf " %s\n\n" "Returning to main menu"
@@ -653,10 +671,24 @@ function change_date () {
             printf " %s\n\n" "New Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
             break
             ;;
+        "f") 
+            _EPOCH_NOW=$(format_date as_epoch "$log_start_date 23:59:59")
+            set_ranges_limit
+            printf " %s\n\n" "New Search Start Date: $log_start_date"
+            break      
+            ;;
         "l") 
             _EPOCH_NOW=$(format_date as_epoch "$log_end_date 23:59:59")
             set_ranges_limit
             printf " %s\n\n" "New Search Start Date: $log_end_date"
+            break      
+            ;;
+        "r")
+            logdates=( $(awk -F, 'FNR>1 {print $1}' "$LOGBOOK_FILE") )
+            random_date="${logdates[ $((RANDOM % ${#logdates[@]} )) ]}"
+            _EPOCH_NOW=$(format_date as_epoch "$random_date 23:59:59")
+            set_ranges_limit
+            printf " %s\n\n" "New Search Start Date: $random_date"
             break      
             ;;
         *)  # validate YYYY-MM-DD format vs reg_date then test if date is valid
@@ -789,17 +821,24 @@ function import_log_file () {
             "") 
                 printf "%s\n\n" "Returning to main menu"
                 return 0
-                ;;
+                ;;               
             *)  
                 if [[ -f "$new_db" ]]; then
-                    printf "%s" "Verifying source file format..."
-                    is_verified=$(verify_source_format "$new_db")
+                    # http://stackoverflow.com/questions/3162385/
+                    if ! [[ "${verified_files[*]}" =~ ${new_db##*/} ]]; then
+                        printf "%s" "Verifying source file format..."  
+                        
+                        if [[ "$(verify_source_format "$new_db")" -eq 0 ]]; then
+                            printf "%s\n" "...OK"
+                            verified_files+=( ${new_db##*/} )
+                        else
+                            printf "%s\n" "...FAILED"
+                            printf " %s\n\n" "Source File Format Error! Enter another source file or cancel"
+                        fi
+                    fi
                 
-                    if [[ "$is_verified" -eq 1 ]]; then
-                        printf "\n %s\n" "Source File Format Error! Enter another source file or cancel" 
-                    else
+                    if [[ "${verified_files[*]}" =~ ${new_db##*/} ]]; then
                         LOGBOOK_FILE="$new_db"
-                        printf "%s\n" "OK"
                         printf "%s %s\n" "New logfile is: " "$LOGBOOK_FILE"
                         RECENT_RANGES=( $default_ranges )
                         create_search_database
@@ -810,6 +849,7 @@ function import_log_file () {
                     printf " %s\n\n" "$new_db not found! Check path or filename!"
                 fi
                 ;;
+                
         esac
     done
     
@@ -896,7 +936,7 @@ return 0
 }
 
 function main () {
-# Interactive program control.
+# Program entry point. Enables interactive program control.
 
 create_search_database
 clear
