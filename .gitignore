@@ -9,6 +9,7 @@ variable_list.txt
 logbook_report*
 issues*
 test*
+new_features.txt
 
 # Directories
 development/
