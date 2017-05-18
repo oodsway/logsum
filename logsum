@@ -22,8 +22,6 @@
 # 
 # -----------------------------------------------------------------------------
 
-clear
-
 OS_SUPPORTED=( "Linux" "Darwin" "FreeBSD" )
 OS=$(uname)
 if ! [[ "${OS_SUPPORTED[*]}" =~ $OS ]]; then
@@ -691,21 +689,16 @@ function change_date () {
             printf " %s\n\n" "New Search Start Date: $random_date"
             break      
             ;;
-        *)  # validate YYYY-MM-DD format vs reg_date then test if date is valid
-            if [[ "$new_date" =~ $reg_date ]]; then
-                is_valid=$(is_date_valid "$new_date")
-                if [[ "$is_valid" -eq 0 ]]; then
-                    log_start_test=$(format_date as_epoch "$new_date 23:59:59")
-                    if [[ "$log_start_test" -lt "$log_start_epoch" ]]; then
-                        printf " %s\n\n" "Invalid! Date is prior to the log start date: $log_start_date"
-                    else
-                        _EPOCH_NOW="$log_start_test"                       
-                        set_ranges_limit
-                        printf " %s\n\n" "New Search Start Date: $new_date"
-                        break
-                    fi
+        *)  # validate YYYY-MM-DD format vs reg_date and test if date is valid.
+            if [[ "$new_date" =~ $reg_date && $(is_date_valid "$new_date") -eq 0 ]]; then
+                log_start_test=$(format_date as_epoch "$new_date 23:59:59")
+                if [[ "$log_start_test" -lt "$log_start_epoch" ]]; then
+                    printf " %s\n\n" "Invalid! Date is prior to the log start date: $log_start_date"
                 else
-                    printf " %s\n\n" "Invalid date or format!"
+                    _EPOCH_NOW="$log_start_test"
+                    set_ranges_limit
+                    printf " %s\n\n" "New Search Start Date: $new_date"
+                    break
                 fi
             else
                 printf " %s\n\n" "Invalid date or format!"
@@ -779,7 +772,6 @@ function change_recent_ranges () {
                     else
                         check_list+=( "pattern" )
                     fi
-                    
                 done
 
                 if [[ "${check_list[*]}" =~ pattern ]]; then
