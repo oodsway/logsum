@@ -76,7 +76,7 @@ fi
 # DEFINITIONS:
 EPOCH_LOG="${launch_path}"/.logbook_by_epoch.csv
 OUTPUT_FILE="${launch_path}"/.logsum_results.txt
-_SEC_IN_DAY=$((3600 * 24))
+SEC_PER_DAY=$((3600 * 24))
 default_ranges="30 60 90 180 365 1825 3650 7300" 
 RECENT_RANGES=( $default_ranges )
 is_sorted="chronological"
@@ -200,13 +200,13 @@ return 0
 }
 
 function set_ranges_limit () {
-# Calculate max recent range value based on _EPOCH_NOW and date of first powered flight: 1903-12-17 10:35:00
+# Calculate max recent range value based on EPOCH_NOW and date of first powered flight: 1903-12-17 10:35:00
 # Optional: use limit of dates allowed 1900-01-01: 
 #     century20_epoch="-2208970800"
-#     max_range_val=$(( $(( _EPOCH_NOW - century20_epoch )) / _SEC_IN_DAY ))
+#     max_range_val=$(( $(( EPOCH_NOW - century20_epoch )) / SEC_PER_DAY ))
 
     first_flight_epoch="-2084084700"
-    max_range_val=$(( $(( _EPOCH_NOW - first_flight_epoch )) / _SEC_IN_DAY ))
+    max_range_val=$(( $(( EPOCH_NOW - first_flight_epoch )) / SEC_PER_DAY ))
 
 return 0
 }
@@ -248,7 +248,7 @@ function epoch_engine () {
     esac
     printf "%s\n" "...ready"
        
-    _EPOCH_NOW=$(format_date as_epoch "$(date +%F) 23:59:59")
+    EPOCH_NOW=$(format_date as_epoch "$(date +%F) 23:59:59")
     set_ranges_limit
        
     log_epoch_list=( $(get_field_list 1) )
@@ -283,7 +283,7 @@ function leap_test () {
 
     test_epoch="$1"
     year_test_epoch=$(format_date get_year "$test_epoch")
-    year_epoch_now=$(format_date get_year "$_EPOCH_NOW")
+    year_epoch_now=$(format_date get_year "$EPOCH_NOW")
     
     leaps=0
     for (( test_year="$year_epoch_now"; test_year>="$year_test_epoch"; test_year-- )); do
@@ -291,13 +291,13 @@ function leap_test () {
   
             test_year_leap_day_epoch=$(format_date as_epoch "$test_year-02-29 00:00:00")
             
-            if [[ "$_EPOCH_NOW" -ge "$test_year_leap_day_epoch" && "$test_epoch" -le "$test_year_leap_day_epoch" ]]; then
+            if [[ "$EPOCH_NOW" -ge "$test_year_leap_day_epoch" && "$test_epoch" -le "$test_year_leap_day_epoch" ]]; then
                 let leaps leaps+=1
             fi
         fi
     done
 
-    echo "$leaps" "$((test_epoch -  leaps * _SEC_IN_DAY))" 
+    echo "$leaps" "$((test_epoch -  leaps * SEC_PER_DAY))" 
     
 return 0
 }
@@ -308,7 +308,7 @@ function build_epoch_list () {
     leap_list=()
     EPOCH_LIST=()
     for range in "${RECENT_RANGES[@]}"; do
-        if_leap=( $(leap_test $((_EPOCH_NOW - range * _SEC_IN_DAY )) ) )
+        if_leap=( $(leap_test $((EPOCH_NOW - range * SEC_PER_DAY )) ) )
         leap_list+=( "${if_leap[0]}" )
         EPOCH_LIST+=( "${if_leap[1]}" )
     done
@@ -407,8 +407,8 @@ function get_program_database_info () {
     
     local separator="---------------------------------------" 
    
-    printf "%s\n" "Current value of _EPOCH_NOW: $_EPOCH_NOW"
-    printf "%s\n" "Current date of _EPOCH_NOW: $(format_date as_day "$_EPOCH_NOW")"
+    printf "%s\n" "Current value of EPOCH_NOW: $EPOCH_NOW"
+    printf "%s\n" "Current date of EPOCH_NOW: $(format_date as_day "$EPOCH_NOW")"
     printf "%s %s\n\n" "Maximum Recent Range Value Allowed: " "$max_range_val days" 
     
     printf "%s\n\n" "Table 2.Leap Year Corrected Recent Range Values and Corresponding Dates"
@@ -478,7 +478,7 @@ function flight_experience_summary () {
 # Creates summary table of total and recent flight experience.
 
     max_recent_experience_date=$(format_date as_day "${EPOCH_LIST[*]: -1}")
-    epoch_now_date=$(format_date as_day "$_EPOCH_NOW")
+    epoch_now_date=$(format_date as_day "$EPOCH_NOW")
     {
     printf "%-45s %-45s\n" "Total Flight Experience"  "Recent Flight Experience"
     printf "%-45s %-45s\n" "From: $log_start_date" "From: $epoch_now_date"   
@@ -494,15 +494,15 @@ function flight_experience_summary () {
     
     for index in "${search_field_index_list[@]}"; do
         field_name="${fields_list[index-1]}"
-        field_sum=$(get_epoch_range_sum "$_EPOCH_NOW" "$log_start_epoch" "$index")
+        field_sum=$(get_epoch_range_sum "$EPOCH_NOW" "$log_start_epoch" "$index")
  
         # determine bounds & the recent_experience value then add to recent_exp_list
         for search_epoch in "${EPOCH_LIST[@]}"; do
             
-            if [[ "$search_epoch" -gt "$log_end_epoch" || "$_EPOCH_NOW" -lt "$log_start_epoch" ]]; then            
+            if [[ "$search_epoch" -gt "$log_end_epoch" || "$EPOCH_NOW" -lt "$log_start_epoch" ]]; then            
                 value=0
             else
-                value=$(get_epoch_range_sum "$_EPOCH_NOW" "$search_epoch" "$index")
+                value=$(get_epoch_range_sum "$EPOCH_NOW" "$search_epoch" "$index")
                 if [ "$value" = "" ]; then value=0; fi
             fi
             
@@ -654,7 +654,7 @@ function change_date () {
     
     printf "\n%s\n" "First Recorded Flight Date: $log_start_date"
     printf "%s\n" "Last Recorded Flight Date: $log_end_date"
-    printf "%s\n\n" "Current Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
+    printf "%s\n\n" "Current Search Start Date: $(format_date as_day "$EPOCH_NOW")"
     
     while true; do
         read -r -p "Enter YYYY-MM-DD | (t)oday | (f)irst, (l)ast, (r)andom flight date | enter to cancel: " new_date
@@ -664,19 +664,19 @@ function change_date () {
             return 0
             ;;
         "t") 
-            _EPOCH_NOW=$(format_date as_epoch "$(date +%F) 23:59:59")
+            EPOCH_NOW=$(format_date as_epoch "$(date +%F) 23:59:59")
             set_ranges_limit
-            printf " %s\n\n" "New Search Start Date: $(format_date as_day "$_EPOCH_NOW")"
+            printf " %s\n\n" "New Search Start Date: $(format_date as_day "$EPOCH_NOW")"
             break
             ;;
         "f") 
-            _EPOCH_NOW=$(format_date as_epoch "$log_start_date 23:59:59")
+            EPOCH_NOW=$(format_date as_epoch "$log_start_date 23:59:59")
             set_ranges_limit
             printf " %s\n\n" "New Search Start Date: $log_start_date"
             break      
             ;;
         "l") 
-            _EPOCH_NOW=$(format_date as_epoch "$log_end_date 23:59:59")
+            EPOCH_NOW=$(format_date as_epoch "$log_end_date 23:59:59")
             set_ranges_limit
             printf " %s\n\n" "New Search Start Date: $log_end_date"
             break      
@@ -684,7 +684,7 @@ function change_date () {
         "r")
             logdates=( $(awk -F, 'FNR>1 {print $1}' "$LOGBOOK_FILE") )
             random_date="${logdates[ $((RANDOM % ${#logdates[@]} )) ]}"
-            _EPOCH_NOW=$(format_date as_epoch "$random_date 23:59:59")
+            EPOCH_NOW=$(format_date as_epoch "$random_date 23:59:59")
             set_ranges_limit
             printf " %s\n\n" "New Search Start Date: $random_date"
             break      
@@ -695,7 +695,7 @@ function change_date () {
                 if [[ "$log_start_test" -lt "$log_start_epoch" ]]; then
                     printf " %s\n\n" "Invalid! Date is prior to the log start date: $log_start_date"
                 else
-                    _EPOCH_NOW="$log_start_test"
+                    EPOCH_NOW="$log_start_test"
                     set_ranges_limit
                     printf " %s\n\n" "New Search Start Date: $new_date"
                     break
@@ -869,7 +869,7 @@ function display_file () {
         if [[ "$1" = "$OUTPUT_FILE" ]]; then
             cat "$1"
         else
-            more "$1"
+            less "$1"
         fi
     else
         printf "%s\n\n" "$1 file not found!"
