@@ -713,31 +713,16 @@ return 0
 
 function sort_custom_ranges () {
 # Sorts custom RECENT_RANGES values from low to high (most recent 1st; oldest last).
+# modification of https://stackoverflow.com/questions/9516408
 
-    copy_list=( "${@}" )
-    sorted_list=()
+    unsorted_arr=( "${@}" )
+    sorted_arr=$(
+    for number in "${unsorted_arr[@]}"; do
+        echo "$number"
+    done | sort -nu | tr '\n' ' ')
     
-    # pick first item in list then check to find true min & add that to sorted_list   
-    min="${copy_list[0]}"
-    
-    while (( ${#copy_list[@]} > 0)); do
-        min_max=( $(get_min_max "${copy_list[@]}") )
-        min="${min_max[0]}"
-        sorted_list+=( "$min" )
-        
-        # remove min from copy_list by making tmp_list excluding min; make copy==new and reset min      
-        tmp_list=()
-        for val in "${copy_list[@]}"; do
-            if [ "$val" != "$min" ]; then
-                tmp_list+=( "$val" )
-            fi
-        done    
-        copy_list=( "${tmp_list[@]}" )
-        min="${copy_list[0]}"
-    done
-    
-    echo "${sorted_list[@]}"
-    
+    echo "${sorted_arr[@]}"
+
 return 0
 }
 
