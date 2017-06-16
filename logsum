@@ -713,13 +713,12 @@ return 0
 
 function sort_custom_ranges () {
 # Sorts custom RECENT_RANGES values from low to high (most recent 1st; oldest last).
-# modification of https://stackoverflow.com/questions/9516408
+# modification of https://stackoverflow.com/questions/7442417/
 
     unsorted_arr=( "${@}" )
-    sorted_arr=$(
-    for number in "${unsorted_arr[@]}"; do
-        echo "$number"
-    done | sort -nu | tr '\n' ' ')
+    IFS=$'\n'
+    sorted_arr=( $( sort -nu <<< "${unsorted_arr[*]}" ) )
+    unset IFS
     
     echo "${sorted_arr[@]}"
 
