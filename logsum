@@ -711,6 +711,19 @@ function change_date () {
 return 0
 }
 
+function sort_array () {
+# Uniquely sorts an array of numbers in ascending order (sort -nu).
+# modification of https://stackoverflow.com/questions/7442417
+
+    IFS=$'\n'
+    sorted_arr=( $( sort -nu <<< "${*}" ) )
+    unset IFS
+    
+    echo "${sorted_arr[@]}"
+
+return 0
+}
+
 function change_recent_ranges () {
 # Sets custom recent experience ranges & rebuilds the EPOCH_LIST.
 
@@ -739,6 +752,7 @@ function change_recent_ranges () {
                         else
                             check_list+=( "maxrange" )
                         fi
+                        
                     else
                         check_list+=( "pattern" )
                     fi
@@ -749,7 +763,7 @@ function change_recent_ranges () {
                 elif [[ "${check_list[*]}" =~ maxrange ]]; then
                       printf " %s\n\n" "Maximum allowed range value of $max_range_val exceeded!"
                 else  
-                    RECENT_RANGES=( $( echo "${new_ranges[@]}" | tr ' ' '\n' | sort -nu ) )
+                    RECENT_RANGES=( $( sort_array "${new_ranges[@]}" ) )
                     break
                 fi
                 ;;
