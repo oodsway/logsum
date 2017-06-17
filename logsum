@@ -711,20 +711,6 @@ function change_date () {
 return 0
 }
 
-function sort_custom_ranges () {
-# Sorts custom RECENT_RANGES values from low to high (most recent 1st; oldest last).
-# modification of https://stackoverflow.com/questions/7442417/
-
-    unsorted_arr=( "${@}" )
-    IFS=$'\n'
-    sorted_arr=( $( sort -nu <<< "${unsorted_arr[*]}" ) )
-    unset IFS
-    
-    echo "${sorted_arr[@]}"
-
-return 0
-}
-
 function change_recent_ranges () {
 # Sets custom recent experience ranges & rebuilds the EPOCH_LIST.
 
@@ -763,7 +749,7 @@ function change_recent_ranges () {
                 elif [[ "${check_list[*]}" =~ maxrange ]]; then
                       printf " %s\n\n" "Maximum allowed range value of $max_range_val exceeded!"
                 else  
-                    RECENT_RANGES=( $(sort_custom_ranges "${new_ranges[@]}" ) )
+                    RECENT_RANGES=( $( echo "${new_ranges[@]}" | tr ' ' '\n' | sort -nu ) )
                     break
                 fi
                 ;;
