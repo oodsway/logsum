@@ -145,13 +145,12 @@ excluded automatically since the field will contain text.
 
 ### Notes on Word-Splitting
 
-Text from fields 2 and 3 (Aircraft Make & Model and Aircraft Ident) is used to create summary
-tables of flight experience with each of these categories. Take care to avoid spaces within the
-data in these fields as word-splitting will occur and lead to erroneous results. For example
-Aircraft Make & Model PA28-151 will succeed, but PA28 151 will not.
+Previous issues with word-splitting with data from field 2 (Aircraft Make & Model) and field 
+3 (Aircraft Ident) used to create summary tables of experience by aircraft type and aircraft 
+ID have been resolved. The program will now properly calculate flight experience for Aircraft 
+Make & Model in the format PA28 151 as well as PA28-151. There is no longer a need to perform 
+special formatting to avoid spaces in these fields.
 
-Attempts to resolve word-splitting have thus far been unsuccessful; suggestions are welcomed.  For now,
-the best fix is to avoid spaces in the data in these fields.
 
 ### Acknowledgements
 
