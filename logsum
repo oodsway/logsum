@@ -537,8 +537,11 @@ return 0
 
 function aircraft_type_summary () {
 # Creates summary table of flight experience by aircraft type with list of aircraft IDs for each type.
-
+# Avoid word-splitting by changing IFS to exclude " ". Set to new line.
+    IFS=$'\n'
     AIRCRAFT_TYPE_LIST=( $(get_field_list 2 | list_sorter ) )
+    IFS=$' \t\n'
+    
     local separator="--------------------------------------------------------------------------------"
     {
     printf "%s\n" " Aircraft Type        Aircraft IDs                               Flight Time (h)"
@@ -588,8 +591,11 @@ return 0
 
 function aircraft_id_summary () {
 # Creates summary table of flight experience by aircraft ID including aircraft type.
-
+# Avoid word-splitting by changing IFS to exclude " ". Set to new line.
+    IFS=$'\n'
     AIRCRAFT_ID_LIST=( $(get_field_list 3 | list_sorter) ) 
+    IFS=$' \t\n'
+    
     local separator="-------------------------------------------------------"
     {
     printf "%s\n" " Aircraft ID       Aircraft Type      Flight Time (h)"
@@ -712,12 +718,13 @@ return 0
 }
 
 function sort_array () {
-# Uniquely sorts an array of numbers in ascending order (sort -nu).
-# modification of https://stackoverflow.com/questions/7442417
+# Uniquely sorts an array ( "${*}" ) of numbers in ascending order (sort -nu).
+# Modification of https://stackoverflow.com/questions/7442417
+# Sort requires new line, so change IFS.
 
     IFS=$'\n'
     sorted_arr=( $( sort -nu <<< "${*}" ) )
-    unset IFS
+    IFS=$' \t\n'
     
     echo "${sorted_arr[@]}"
 
