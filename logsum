@@ -74,6 +74,13 @@ else
 fi
 
 # DEFINITIONS:
+time_day_start="00:00:00"           # HH:MM:SS for start of day
+time_day_end="23:59:59"             # HH:MM:SS for end of day
+fld_date="1"                        # field number for date
+fld_typ="2"                         # field number for aircraft type
+fld_idn="3"                         # field number for aircraft identification
+fld_tif="6"                         # field number for time in flight/ flight duration
+fld_sim="13"                        # field number for time in simulator
 EPOCH_LOG="${launch_path}"/.logbook_by_epoch.csv
 OUTPUT_FILE="${launch_path}"/.logsum_results.txt
 SEC_PER_DAY=$((3600 * 24))
@@ -138,8 +145,8 @@ function is_date_valid () {
             date -d "$1" &> /dev/null; echo $?
             ;;
         "Darwin"|"FreeBSD")
-            bsd_test=$(date -v+1M -v-1M -jf "%F %T" "$1 00:00:00" +"%F %T" 2> /dev/null)
-            if [[ "$bsd_test" == "$1 00:00:00" ]]; then
+            bsd_test=$(date -v+1M -v-1M -jf "%F %T" "$1 $time_day_start" +"%F %T" 2> /dev/null)
+            if [[ "$bsd_test" == "$1 $time_day_start" ]]; then
                 echo 0
             else
                 echo 1
@@ -156,7 +163,7 @@ function verify_source_format () {
     dates_list=( $(awk -F, 'FNR>1 {print $1}' "$1") )
     log_len="${#dates_list[@]}"
     
-    if [[ "$header_len" -ge 13 && "$header_val" =~ $reg_word_date && "$log_len" -ge 1 ]]; then
+    if [[ "$header_len" -ge "$fld_sim" && "$header_val" =~ $reg_word_date && "$log_len" -ge 1 ]]; then
         for cell_val in "${dates_list[@]}"; do
             if ! [[ "$cell_val" =~ $reg_date && "$(is_date_valid "$cell_val")" -eq 0 ]]; then
                 echo 1
@@ -248,10 +255,10 @@ function epoch_engine () {
     esac
     printf "%s\n" "...ready"
        
-    EPOCH_NOW=$(format_date as_epoch "$(date +%F) 23:59:59")
+    EPOCH_NOW=$(format_date as_epoch "$(date +%F) $time_day_end")
     set_ranges_limit
        
-    log_epoch_list=( $(get_field_list 1) )
+    log_epoch_list=( $(get_field_list "$fld_date") )
     start_end=( $(get_min_max "${log_epoch_list[@]}") )
     log_start_epoch="${start_end[0]}"
     log_end_epoch="${start_end[1]}"
@@ -289,7 +296,7 @@ function leap_test () {
     for (( test_year="$year_epoch_now"; test_year>="$year_test_epoch"; test_year-- )); do
         if [[ $(is_year_leap "$test_year") == "True" ]]; then   
   
-            test_year_leap_day_epoch=$(format_date as_epoch "$test_year-02-29 00:00:00")
+            test_year_leap_day_epoch=$(format_date as_epoch "$test_year-02-29 $time_day_start")
             
             if [[ "$EPOCH_NOW" -ge "$test_year_leap_day_epoch" && "$test_epoch" -le "$test_year_leap_day_epoch" ]]; then
                 let leaps leaps+=1
@@ -539,7 +546,7 @@ function aircraft_type_summary () {
 # Creates summary table of flight experience by aircraft type with list of aircraft IDs for each type.
 # Avoid word-splitting by changing IFS to exclude " ". Set to new line.
     IFS=$'\n'
-    AIRCRAFT_TYPE_LIST=( $(get_field_list 2 | list_sorter ) )
+    AIRCRAFT_TYPE_LIST=( $(get_field_list "$fld_typ" | list_sorter ) )
     IFS=$' \t\n'
     
     local separator="--------------------------------------------------------------------------------"
@@ -550,11 +557,11 @@ function aircraft_type_summary () {
     type_times=( )
     for aircraft_type in "${AIRCRAFT_TYPE_LIST[@]}"; do
         ac_type_id_list=( $(awk -F, -v val="${aircraft_type}" '{ if ($2==val) {print $3} }' "$EPOCH_LOG" | list_sorter) )
-        time_in_type=$(awk -F, -v val="${aircraft_type}" -v fld="6" '{ if ($2==val) {s+=$fld} } END {print s}' "$EPOCH_LOG")
+        time_in_type=$(awk -F, -v val="${aircraft_type}" -v fld="$fld_tif" '{ if ($2==val) {s+=$fld} } END {print s}' "$EPOCH_LOG")
 
         # if duration/time (field 6) is 0, check if simulator (field 13)      
         if [ "$time_in_type" = 0 ]; then
-            time_in_type=$(awk -F, -v val="${aircraft_type}" -v fld="13" '{ if ($2==val) {s+=$fld} } END {print s}' "$EPOCH_LOG")
+            time_in_type=$(awk -F, -v val="${aircraft_type}" -v fld="$fld_sim" '{ if ($2==val) {s+=$fld} } END {print s}' "$EPOCH_LOG")
         fi
         # print ac_type_id_list: wrap if number elements >5; if <5 print on same line
         if [[ "${#ac_type_id_list[@]}" -gt 5 ]] ; then
@@ -593,7 +600,7 @@ function aircraft_id_summary () {
 # Creates summary table of flight experience by aircraft ID including aircraft type.
 # Avoid word-splitting by changing IFS to exclude " ". Set to new line.
     IFS=$'\n'
-    AIRCRAFT_ID_LIST=( $(get_field_list 3 | list_sorter) ) 
+    AIRCRAFT_ID_LIST=( $(get_field_list "$fld_idn" | list_sorter) ) 
     IFS=$' \t\n'
     
     local separator="-------------------------------------------------------"
@@ -604,10 +611,10 @@ function aircraft_id_summary () {
     id_times=( )
     for aircraft_id in "${AIRCRAFT_ID_LIST[@]}"; do
         type_ac_id=$(awk -F, -v val="$aircraft_id" '{ if ($3==val) {print $2} }' "$EPOCH_LOG" | list_sorter)
-        time_in_id=$(awk -F, -v val="$aircraft_id" -v fld="6" '{ if ($3==val) {s+=$fld} } END {print s}' "$EPOCH_LOG")
+        time_in_id=$(awk -F, -v val="$aircraft_id" -v fld="$fld_tif" '{ if ($3==val) {s+=$fld} } END {print s}' "$EPOCH_LOG")
         # if time_in_id (field 6) is 0, check if simulator time (field 13)
         if [ "$time_in_id" == 0 ]; then
-            time_in_id=$(awk -F, -v val="$aircraft_id" -v fld="13" '{ if ($3==val) {s+=$fld} } END {print s}' "$EPOCH_LOG")
+            time_in_id=$(awk -F, -v val="$aircraft_id" -v fld="$fld_sim" '{ if ($3==val) {s+=$fld} } END {print s}' "$EPOCH_LOG")
         fi   
         id_times+=( "$time_in_id"  )        
         printf "  %-17s %-19s %6.1f\n" "$aircraft_id" "$type_ac_id" "$time_in_id"
@@ -640,9 +647,9 @@ function experience_by_year () {
     
     by_year_sums=( )
     for year in "${years[@]}"; do
-        start_year_epoch=$(format_date as_epoch "$year-01-01 00:00:00")
-        end_year_epoch=$(format_date as_epoch "$year-12-31 23:59:59")
-        year_sum=$(get_epoch_range_sum "$end_year_epoch" "$start_year_epoch"  6)   
+        start_year_epoch=$(format_date as_epoch "$year-01-01 $time_day_start")
+        end_year_epoch=$(format_date as_epoch "$year-12-31 $time_day_end")
+        year_sum=$(get_epoch_range_sum "$end_year_epoch" "$start_year_epoch"  "$fld_tif")   
         by_year_sums+=( "$year_sum" )        
         printf "%5s | %9.1f \n"  "$year" "$year_sum"
     done
@@ -670,19 +677,19 @@ function change_date () {
             return 0
             ;;
         "t") 
-            EPOCH_NOW=$(format_date as_epoch "$(date +%F) 23:59:59")
+            EPOCH_NOW=$(format_date as_epoch "$(date +%F) $time_day_end")
             set_ranges_limit
             printf " %s\n\n" "New Search Start Date: $(format_date as_day "$EPOCH_NOW")"
             break
             ;;
         "f") 
-            EPOCH_NOW=$(format_date as_epoch "$log_start_date 23:59:59")
+            EPOCH_NOW=$(format_date as_epoch "$log_start_date $time_day_end")
             set_ranges_limit
             printf " %s\n\n" "New Search Start Date: $log_start_date"
             break      
             ;;
         "l") 
-            EPOCH_NOW=$(format_date as_epoch "$log_end_date 23:59:59")
+            EPOCH_NOW=$(format_date as_epoch "$log_end_date $time_day_end")
             set_ranges_limit
             printf " %s\n\n" "New Search Start Date: $log_end_date"
             break      
@@ -690,14 +697,14 @@ function change_date () {
         "r")
             logdates=( $(awk -F, 'FNR>1 {print $1}' "$LOGBOOK_FILE") )
             random_date="${logdates[ $((RANDOM % ${#logdates[@]} )) ]}"
-            EPOCH_NOW=$(format_date as_epoch "$random_date 23:59:59")
+            EPOCH_NOW=$(format_date as_epoch "$random_date $time_day_end")
             set_ranges_limit
             printf " %s\n\n" "New Search Start Date: $random_date"
             break      
             ;;
         *)  # validate YYYY-MM-DD format vs reg_date and test if date is valid.
             if [[ "$new_date" =~ $reg_date && $(is_date_valid "$new_date") -eq 0 ]]; then
-                log_start_test=$(format_date as_epoch "$new_date 23:59:59")
+                log_start_test=$(format_date as_epoch "$new_date $time_day_end")
                 if [[ "$log_start_test" -lt "$log_start_epoch" ]]; then
                     printf " %s\n\n" "Invalid! Date is prior to the log start date: $log_start_date"
                 else
