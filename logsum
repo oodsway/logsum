@@ -282,6 +282,7 @@ function is_year_leap () {
         leap=False
     fi
     echo "$leap"
+
 return 0
 }
 
@@ -445,7 +446,8 @@ return 0
 function get_epoch_range_sum () {
 # Calculate the sum of the field number in $3 between epoch values t_upper in $1 and t_lower in $2.
 
-    awk -F, -v t_upper="$1" -v t_lower="$2" -v field="$3" '{if (t_upper>=$1 && $1>=t_lower) {s+=$field} } END {print s}' "$EPOCH_LOG"
+    awk -F, -v t_upper="$1" -v t_lower="$2" -v field="$3" '{if (t_upper>=$1 && $1>=t_lower) 
+    {s+=$field} } END {print s}' "$EPOCH_LOG"
     
 return 0
 }
@@ -854,7 +856,6 @@ function toggle_sort_status () {
     else
         is_sorted="alphabetical"
     fi
-    printf "%s\n" "Aircraft Type & Aircraft ID results will appear $is_sorted."
     
 return 0
 }
@@ -872,6 +873,7 @@ function display_file () {
     else
         printf "%s\n\n" "$1 file not found!"
     fi
+
 return 0
 }
 
@@ -940,7 +942,21 @@ while true; do
     # modification of: http://stackoverflow.com/questions/8063228/
     if [[ "${menu_item_list[*]}" =~ $opt ]]; then
         rm -f "$OUTPUT_FILE"
-    fi        
+    fi
+
+# Remember last option chosen if opt is not t|T. && is correct logic.
+    if [[ $opt -ne t && $opt -ne T ]]; then
+        last_opt="$opt"
+    fi
+
+#  Re-display re-sorted aircraft_type or id_summary table when user selects t|T after 3|4.
+    if [[ "t T" =~ $opt && $last_opt -eq 3 ]] \
+    || [[ "t T" =~ $opt && $last_opt -eq 4 ]]; then
+        rm -f "$OUTPUT_FILE"
+        toggle_sort_status
+        opt="$last_opt"
+    fi
+
     case $opt in
         "1")
             flight_experience_summary
@@ -988,6 +1004,7 @@ while true; do
             ;;
         "t"|"T")
             toggle_sort_status
+            printf "%s\n" "Aircraft Type & Aircraft ID results will appear $is_sorted."
             ;;
         "m"|"M")
             clear
