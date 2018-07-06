@@ -34,41 +34,30 @@ demo_logbook="${launch_path}"/logsum_demo.csv
 verified_files=( "logsum_demo.csv" "logsum_demo_descending.csv" "logshare_demo.csv" )
 
 function prompt_user () {
-# Prompt user to enter a valid filename, select demo or quit.
+# Prompt user to enter a valid path/filename or quit.
 
-    if [[ "$1" = "" ]]; then
-        read_db="$demo_logbook"
-    else
-        read_db="$1"
-    fi
+    read_db=${1:-$demo_logbook}
     
     while true; do
         printf "%s\n\n" "$read_db not found! Check the path and filename."
-        read -r -p "Enter filename | (d) for demo | (q) to quit: " read_db
+        read -r -p "Enter path/filename or (q) quit: " read_db
             
-        if [[ "$read_db" = "q" || "$read_db" = "Q" ]]; then
+        if [[ -f "$read_db" ]]; then
+            LOGBOOK_FILE="$read_db"
+            break
+        elif [[ "$read_db" = "q" || "$read_db" = "Q" ]]; then
             printf "%s\n\n" "Program terminated by user."
             exit 0
-        elif [[ "$read_db" = "d" || "$read_db" = "D" ]]; then
-            if [[ -f "$demo_logbook" ]]; then
-                LOGBOOK_FILE="$demo_logbook"
-                break
-            else
-                read_db="$demo_logbook"
-            fi
-        elif [[ -f "$read_db" ]]; then
-            LOGBOOK_FILE="$read_db"
-            break 
         fi
     done
     
 return 0    
 }
 
-if [[ "$1" = "" && -f "$demo_logbook" ]]; then
-    LOGBOOK_FILE="$demo_logbook"
-elif [[ "$1" != "" && -f "$1" ]]; then
-    LOGBOOK_FILE="$1"
+# At start-up, assign user provided logbook ($1) or default (demo) to LOGBOOK_FILE.
+# Prompt if neither found.
+if [[ -f "$1" || "$1" == "" && -f "$demo_logbook" ]]; then
+    LOGBOOK_FILE=${1:-$demo_logbook}
 else
     prompt_user "$1"
 fi
