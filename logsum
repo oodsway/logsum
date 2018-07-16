@@ -631,10 +631,7 @@ function experience_by_year () {
     a="$(format_date get_year "$log_start_epoch")"
     z="$(format_date get_year "$log_end_epoch")"
     
-    years=( )
-    for (( i=a; i<=z; i++ )); do  
-        years+=("$i")
-    done
+    years=( $(seq "$a" "$z") )
     
     by_year_sums=( )
     for year in "${years[@]}"; do
