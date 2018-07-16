@@ -30,3 +30,4 @@ word-split_fixing/
 ._.DS_Store
 .logbook_by_epoch.csv
 .logsum_results.txt
+.directory
